@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-@staticmethod
 def auto_read(_dir):
     file_form = _dir.split('.')[-1]
     if file_form == 'csv':
