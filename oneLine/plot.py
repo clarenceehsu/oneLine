@@ -18,4 +18,4 @@ def fast_plot(x, y, figsize=[], title='', xlabel='', ylabel='', smooth=False):
 
     plt.show()
 
-# def count_plot(dict, )
+# def count_plot(dict, col=1)

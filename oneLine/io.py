@@ -13,3 +13,12 @@ def auto_read(_dir):
         return pd.read_sql(_dir)
     else:
         return 'Sorry, the format is not matched.'
+
+def save_file(list, filepath):
+
+    try:
+        with open(filepath, 'w') as dict_file:
+            for m in list:
+                dict_file.write('%s\n' % m)
+    except IOError as ioerr:
+        print("File %s can't be created, please check the location." % filepath)
