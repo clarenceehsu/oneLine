@@ -1,4 +1,6 @@
-from .modules import *
+from .modules.plot import *
+from .modules.data import *
+from scipy.interpolate import spline
 
 def fast_plot(x, y, figsize=[], title='', xlabel='', ylabel='', smooth=False):
     sns.set()
