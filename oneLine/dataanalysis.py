@@ -1,4 +1,6 @@
-from .modules import *
+from .modules.data import *
+from .modules.plot import *
+from scipy import stats
 
 def fill_na(data):
     for key, value in data.isnull().sum().items():
@@ -7,8 +9,9 @@ def fill_na(data):
     return data
 
 def summary(df):
+    pd.set_option('display.max_columns', None)
     print(f"Dataset Shape: {df.shape}")
-    summary = pd.DataFrame(df.dtypes,columns=['dtypes'])
+    summary = pd.DataFrame(df.dtypes, columns=['dtypes'])
     summary = summary.reset_index()
     summary['Name'] = summary['index']
     summary = summary[['Name','dtypes']]
@@ -24,8 +27,8 @@ def summary(df):
     return summary
 
 def comparing_variables(data,variable1, variable2):
-    print(data[[variable1, variable2]][data[variable2].isnull()==False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False))
+    print(data[[variable1, variable2]][data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False))
     g = sns.FacetGrid(data, col=variable2).map(sns.distplot, variable1)
     plt.show()
 def counting_values(data, variable1, variable2):
-    return data[[variable1, variable2]][data[variable2].isnull()==False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False)
+    return data[[variable1, variable2]][data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False)

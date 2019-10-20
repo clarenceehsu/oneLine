@@ -1,5 +1,4 @@
-import numpy as np
-import pandas as pd
+from .modules.data import *
 
 def auto_read(_dir):
     file_form = _dir.split('.')[-1]
@@ -22,3 +21,6 @@ def save_file(list, filepath):
                 dict_file.write('%s\n' % m)
     except IOError as ioerr:
         print("File %s can't be created, please check the location." % filepath)
+
+def save_to_csv(filepath, dataframe, header=True, index=False):
+    dataframe.to_csv(filepath, encoding='utf8', header=header, index=index)
