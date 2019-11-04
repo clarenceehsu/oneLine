@@ -12,7 +12,7 @@
 
 ```python
 from oneLine.modules.data import *
-# 这里面包含常见的库调用，如 np、plt、sns 等，一行即可调用其所有，对不同的常用库集合进行了分离。
+# 这里面包含常见的库调用，如 np、plt、sns 等，一行调用，对不同的常用库集合进行了分离。
 
 from oneLine.io import auto_read
 # 调用 io 库里面的 auto_read，这个方法可以自动识别后缀选择适合的方式从文件中导入数据。
@@ -30,6 +30,11 @@ comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的�
 ```
 
 ## 更新日志
+
+### 11.04.2019
+
+- 修复了一些小 bug
+- 添加了一些小功能
 
 ### 10.20.2019
 
