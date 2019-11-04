@@ -24,5 +24,3 @@ def fast_plot(x, y, figsize=[], title='', xlabel='', ylabel='', smooth=False):
         plt.legend(loc='upper left')
 
     plt.show()
-
-# def count_plot(dict, col=1)

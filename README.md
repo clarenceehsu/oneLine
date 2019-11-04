@@ -14,16 +14,18 @@
 from oneLine.modules.data import *
 # 这里面包含常见的库调用，如 np、plt、sns 等，一行调用，对不同的常用库集合进行了分离。
 
-from oneLine.io import auto_read
-# 调用 io 库里面的 auto_read，这个方法可以自动识别后缀选择适合的方式从文件中导入数据。
+from oneLine.data import OneData
+from oneLine.data import OneDatalist
+# oneLine 中的数据分为两种，一种是 DataFrame 类型的数据格式，一种是地址列表所代表的文件列表数据。
+
 from oneLine.dataanalysis import *
 # 调用用于数据分析的 dataanalysis 模块，里面有常用的数据分析模式。
 
-data = auto_read('test.csv')  # 导入数据
+data = OneData(filepath='test.csv')  # 导入数据
 
-data = fill_na(data) # 填补空缺值
+data = data.fill_na() # 填补空缺值
 
-summary(data) # 对数据 EDA （探索性分析）的简单总结
+summary = data.summary() # 对数据 EDA （探索性分析）的简单总结
 
 comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的相关性分析并生成图
 
@@ -33,8 +35,8 @@ comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的�
 
 ### 11.04.2019
 
-- 修复了一些小 bug
-- 添加了一些小功能
+- 改进的算法，修复了一些小 bug
+- 优化了结构，添加了一些功能，现在使用更方便了
 
 ### 10.20.2019
 
