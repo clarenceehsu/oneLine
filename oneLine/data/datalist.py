@@ -17,5 +17,8 @@ class OneDatalist:
         test_list = self.data_list[index_num:]
         return OneDatalist(data_list=train_list), OneDatalist(data_list=test_list)
 
-    def show(self):
-        print(self.data_list)
+    def head(self, n=5):
+        return self.data_list[:n]
+
+    def to_list(self):
+        return self.data_list

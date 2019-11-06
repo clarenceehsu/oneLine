@@ -4,11 +4,18 @@ from ..io import auto_read
 
 
 class OneData:
-    def __init__(self, data=pd.DataFrame, filepath=''):
-        if filepath:
+    def __init__(self, *args):
+        self.train_data = ''
+        self.test_data = ''
+        if isinstance(args[0], str):
+            filepath = args[0]
             self.data = auto_read(filepath)
-        else:
-            self.data = data
+        elif isinstance(args[0], pd.DataFrame):
+            self.data = args[0]
+        elif isinstance(args[0], OneData):
+            self.data = args[0].data
+            self.train_data = args[0].train_data
+            self.test_data = args[0].test_data
 
     # return the shape of the data
     def shape(self):
@@ -19,11 +26,13 @@ class OneData:
         return OneData(data=self.data.head(n=n))
 
     # create dataset from the data, and the train_proportion is the proportion of the train dataset
-    def make_dataset(self, train_proportion=0.0):
+    def make_dataset(self, train_proportion=0.0, save=False):
         index_num = int(self.shape()[0] * train_proportion)
-        train_data = self.data.iloc[:index_num, :]
-        test_data = self.data.iloc[index_num:, :]
-        return OneData(data=train_data), OneData(data=test_data)
+        self.train_data = self.data.iloc[:index_num, :]
+        self.test_data = self.data.iloc[index_num:, :]
+        if save:
+            self.train_data.to_csv(path_or_buf=self.filepath.split('.')[0] + '_train.csv', index=False)
+            self.test_data.to_csv(path_or_buf=self.filepath.split('.')[0] + '_test.csv', index=False)
 
     # create the summary of data
     def summary(self):
@@ -48,9 +57,9 @@ class OneData:
     # fill the na values
     def fill_na(self):
         data = self.data
-        for key, value in self.data.isnull().sum().items():
+        for key, value in data.isnull().sum().items():
             if value:
-                self.data[key].fillna(self.data[key].mode()[0], inplace=True)
+                data[key].fillna(self.data[key].mode()[0], inplace=True)
         return OneData(data=data)
 
     # convert the data to list
