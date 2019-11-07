@@ -1,10 +1,12 @@
 from ..modules.data import *
 from scipy import stats
 from ..io import auto_read
+from .plot import Plot
 
 
-class OneData:
+class OneData(Plot):
     def __init__(self, *args):
+        super().__init__(*args)
         self.train_data = ''
         self.test_data = ''
         if isinstance(args[0], str):
@@ -16,6 +18,8 @@ class OneData:
             self.data = args[0].data
             self.train_data = args[0].train_data
             self.test_data = args[0].test_data
+        elif isinstance(args[0], list):
+            self.data = pd.DataFrame(args[0])
 
     # return the shape of the data
     def shape(self):
@@ -23,7 +27,7 @@ class OneData:
 
     # return the head of the data
     def head(self, n=5):
-        return OneData(data=self.data.head(n=n))
+        return OneData(self.data.head(n=n))
 
     # create dataset from the data, and the train_proportion is the proportion of the train dataset
     def make_dataset(self, train_proportion=0.0, save=False):
@@ -60,7 +64,7 @@ class OneData:
         for key, value in data.isnull().sum().items():
             if value:
                 data[key].fillna(self.data[key].mode()[0], inplace=True)
-        return OneData(data=data)
+        return OneData(data)
 
     # convert the data to list
     def to_list(self):
@@ -90,4 +94,4 @@ class OneData:
         if index:
             for n in index:
                 data = data.drop(n)
-        return OneData(data=data)
+        return OneData(data)
