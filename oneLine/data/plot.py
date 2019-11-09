@@ -43,9 +43,12 @@ class Plot:
 
         plt.show()
 
-    def corr_plot(self, figsize=[], annot=True):
+    def corr_plot(self, parameters=[], figsize=[], annot=True):
         sns.set()
         if figsize:
             plt.figure(figsize=figsize)
-        sns.heatmap(self.data.corr(), annot=annot)
+        if parameters:
+            sns.heatmap(self.data[parameters].corr(), annot=annot)
+        else:
+            sns.heatmap(self.data.corr(), annot=annot)
         plt.show()

@@ -33,6 +33,12 @@ comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的�
 
 ## 更新日志
 
+### 11.09.2019
+
+- 修复了一些 OneData 输入数据时的 bug
+- 增加了数据内存消耗优化的算法
+- 正有想法去做新的深度学习部分的 OneLine，从而方便以后能够通过 OneLine 更方便地生成神经网络并调试
+
 ### 11.06.2019
 
 - 改进了结构
