@@ -8,22 +8,42 @@ from .data_pd import Pandas
 
 
 class OneData(Plot, Pandas):
+    '''
+    That's the initial of the OneData Object.
+    Now you can input list, DataFrame or a list to get a OneData object, and the format will be automatically convert to
+    DataFrame.
+    The structure of OneData:
+        1. self.data
+            It's the main DataFrame dataset. And all the built-in functions were based on it.
+        *2. self.train_data
+        *3. self.test_data
+        *4. self.holdput_data
+        These three parameters is unstable now, and it will be substituted in the future.
+    '''
 
     def __init__(self, *args):
         super().__init__(*args)
         self.train_data = ''
         self.test_data = ''
+        self.holdout_data = ''
 
         if isinstance(args[0], str):
-            from ..io import auto_read
-            filepath = args[0]
-            self.data = auto_read(filepath)
+            file_form = args[0].split('.')[-1]
+            if file_form == 'csv':
+                self.data = pd.read_csv(args[0])
+            if file_form == 'xls' or file_form == 'xlsx':
+                self.data = pd.read_excel(args[0])
+            if file_form == 'json':
+                self.data = pd.read_json(args[0])
+            if file_form == 'sql':
+                self.data = pd.read_sql(args[0])
         elif isinstance(args[0], pd.DataFrame):
             self.data = args[0]
         elif isinstance(args[0], OneData):
             self.data = args[0].data
             self.train_data = args[0].train_data
             self.test_data = args[0].test_data
+            self.holdout_data = args[0].holdout_data
         elif isinstance(args[0], list):
             if isinstance(args[0][0], int):
                 self.data = pd.DataFrame({0: args[0]})
@@ -34,13 +54,22 @@ class OneData(Plot, Pandas):
                 self.data = pd.DataFrame(temp)
 
     # create dataset from the data, and the train_proportion is the proportion of the train dataset
-    def make_dataset(self, train_proportion=0.0, save=False):
-        index_num = int(self.shape()[0] * train_proportion)
+    def make_dataset(self, train=0.0, hold_out=0.0, save=False, filepath=''):
+        index_num = int(self.shape()[0] * train)
         self.train_data = self.data.iloc[:index_num, :]
-        self.test_data = self.data.iloc[index_num:, :]
+        if hold_out:
+            holdout_num = int(self.shape()[0] * hold_out)
+            self.test_data = self.data.iloc[index_num:index_num + holdout_num, :]
+            self.holdout_data = self.data.iloc[index_num + holdout_num:, :]
+        else:
+            self.test_data = self.data.iloc[index_num:, :]
         if save:
-            self.train_data.to_csv(path_or_buf=self.filepath.split('.')[0] + '_train.csv', index=False)
-            self.test_data.to_csv(path_or_buf=self.filepath.split('.')[0] + '_test.csv', index=False)
+            self.train_data.to_csv(path_or_buf=filepath.split('.')[0] + '_train.csv', index=False)
+            self.test_data.to_csv(path_or_buf=filepath.split('.')[0] + '_test.csv', index=False)
+            if hold_out:
+                self.holdout_data.to_csv(path_or_buf=self.filepath.split('.')[0] + '_holdout.csv', index=False)
+        elif hold_out:
+            return OneData(self.train_data), OneData(self.holdout_data), OneData(self.test_data)
         else:
             return OneData(self.train_data), OneData(self.test_data)
 
