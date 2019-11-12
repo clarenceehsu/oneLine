@@ -5,9 +5,10 @@ from pandas.api.types import is_categorical_dtype
 
 from .plot import Plot
 from .data_pd import Pandas
+from ..machinelearning.supervised import Supervised
 
 
-class OneData(Plot, Pandas):
+class OneData(Plot, Pandas, Supervised):
     '''
     That's the initial of the OneData Object.
     Now you can input list, DataFrame or a list to get a OneData object, and the format will be automatically convert to
