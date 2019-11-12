@@ -33,6 +33,11 @@ comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的�
 
 ## 更新日志
 
+### 11.11.2019
+
+- 增加了 Machine Learning 的部分算法，可以耦合 OneData 进行使用
+- 修复部分 bug
+
 ### 11.09.2019
 
 - 修复了一些 OneData 输入数据时的 bug
