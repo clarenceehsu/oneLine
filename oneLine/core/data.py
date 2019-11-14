@@ -9,7 +9,7 @@ from ..machinelearning.supervised import Supervised
 
 
 class OneData(Plot, Pandas, Supervised):
-    '''
+    """
     That's the initial of the OneData Object.
     Now you can input list, DataFrame or a list to get a OneData object, and the format will be automatically convert to
     DataFrame.
@@ -18,15 +18,16 @@ class OneData(Plot, Pandas, Supervised):
             It's the main DataFrame dataset. And all the built-in functions were based on it.
         *2. self.train_data
         *3. self.test_data
-        *4. self.holdput_data
+        *4. self.holdout_data
         These three parameters is unstable now, and it will be substituted in the future.
-    '''
+    """
 
     def __init__(self, *args):
         super().__init__(*args)
         self.train_data = ''
         self.test_data = ''
         self.holdout_data = ''
+        self.model = ''
 
         if isinstance(args[0], str):
             file_form = args[0].split('.')[-1]
@@ -40,11 +41,14 @@ class OneData(Plot, Pandas, Supervised):
                 self.data = pd.read_sql(args[0])
         elif isinstance(args[0], pd.DataFrame):
             self.data = args[0]
+        elif isinstance(args[0], np.ndarray):
+            self.data = pd.DataFrame(args[0])
         elif isinstance(args[0], OneData):
             self.data = args[0].data
             self.train_data = args[0].train_data
             self.test_data = args[0].test_data
             self.holdout_data = args[0].holdout_data
+            self.model = args[0].model
         elif isinstance(args[0], list):
             if isinstance(args[0][0], int):
                 self.data = pd.DataFrame({0: args[0]})
@@ -53,11 +57,18 @@ class OneData(Plot, Pandas, Supervised):
                 for n in range(len(args[0])):
                     temp[n] = args[0][n]
                 self.data = pd.DataFrame(temp)
+        else:
+            print('Input format error, please in put a valid dataset that satisfied OneData.')
+            quit()
 
-    # create dataset from the data, and the train_proportion is the proportion of the train dataset
     def make_dataset(self, train=0.0, hold_out=0.0, save=False, filepath=''):
+        """
+        Create dataset from the data.
+        The proportion of the train core and hold-out data should be specified.
+        """
         index_num = int(self.shape()[0] * train)
         self.train_data = self.data.iloc[:index_num, :]
+
         if hold_out:
             holdout_num = int(self.shape()[0] * hold_out)
             self.test_data = self.data.iloc[index_num:index_num + holdout_num, :]
@@ -74,8 +85,11 @@ class OneData(Plot, Pandas, Supervised):
         else:
             return OneData(self.train_data), OneData(self.test_data)
 
-    # create the summary of data
     def summary(self):
+        """
+        Return a summary of the whole dataset.
+        the stats from scipy is used to calculate the Entropy.
+        """
         from scipy import stats
 
         pd.set_option('display.max_columns', None)
@@ -96,16 +110,29 @@ class OneData(Plot, Pandas, Supervised):
 
         return summ
 
-    # fill the na values
     def fill_na(self):
+        """
+        Fill the NA values.
+        """
         data = self.data
         for key, value in data.isnull().sum().items():
             if value:
                 data[key].fillna(self.data[key].mode()[0], inplace=True)
         return OneData(data)
 
-    # the advanced function of DataFrame.drop, you can input a list of index to drop them
+    def append(self, others, ignore_index=True):
+        """
+        Append two dataset.
+        """
+        if isinstance(others, pd.DataFrame):
+            return OneData(self.data.append(others, ignore_index=ignore_index))
+        if isinstance(others, OneData):
+            return OneData(self.data.append(others.data, ignore_index=ignore_index))
+
     def drop(self, column=[], row=[]):
+        """
+        The advanced function of DataFrame.drop, you can input a list of index to drop them.
+        """
         data = self.data
         if column:
             data = data.drop(column, axis=1)
@@ -115,6 +142,10 @@ class OneData(Plot, Pandas, Supervised):
         return OneData(data)
 
     def reduce_mem_usage(self, use_float16=False):
+        """
+        That's a function from Kaggle. It can automatically distinguish the type of one single data and reset a suitable
+         type.
+        """
         df = self.data
         start_mem = df.memory_usage().sum() / 1024 ** 2
         print("Memory usage of dataframe is {:.2f} MB".format(start_mem))

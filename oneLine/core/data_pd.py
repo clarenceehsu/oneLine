@@ -5,7 +5,7 @@ class Pandas:
     def __init__(self, *args):
         self.data = pd.DataFrame()
 
-    # return the shape of the data
+    # return the shape of the core
     @property
     def shape(self):
         return self.data.shape
@@ -18,15 +18,18 @@ class Pandas:
     def head(self, n=5):
         return self.data.head(n=n)
 
-    # convert the data to list
+    def info(self):
+        return self.data.info()
+
+    # convert the core to list
     def to_list(self):
         return np.array(self.data).tolist()
 
-    # convert the data to array
+    # convert the core to array
     def to_array(self):
         return np.array(self.data)
 
-    # convert the data to DataFrame
+    # convert the core to DataFrame
     def to_df(self):
         return self.data
 
