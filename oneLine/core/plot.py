@@ -6,10 +6,18 @@ from scipy.interpolate import spline
 
 
 class Plot:
+    """
+    This is a plot module for data visualization.
+    """
     def __init__(self, *args):
         self.data = pd.DataFrame()
 
     def fast_plot(self, x='', y=[], figsize=[], title='', xlabel='', ylabel='', smooth=False):
+        """
+        It's a fast plot function to generate graph rapidly.
+        :param figsize: The size of figure.
+        :param smooth: Set it True if the curve smoothing needed.
+        """
         sns.set()
         if figsize:
             plt.figure(figsize=figsize)
@@ -44,6 +52,12 @@ class Plot:
         plt.show()
 
     def corr_plot(self, parameters=[], figsize=[], annot=True):
+        """
+        Generate the correction graph
+        :param parameters: The parameters selected.
+        :param figsize: The size of figure.
+        :param annot: Display the annotation or not.
+        """
         sns.set()
         if figsize:
             plt.figure(figsize=figsize)
@@ -52,3 +66,37 @@ class Plot:
         else:
             sns.heatmap(self.data.corr(), annot=annot)
         plt.show()
+
+    def comparing_variables(self, variable1, variable2):
+        print(self.data[[variable1, variable2]][self.data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False))
+        sns.FacetGrid(self.data, col=variable2).map(sns.distplot, variable1)
+        plt.show()
+
+    def counting_values(self, variable1, variable2):
+        return self.data[[variable1, variable2]][self.data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False)
+
+def fast_plot(x, y, figsize=[], title='', xlabel='', ylabel='', smooth=False):
+    """
+    That's a isolate fast_plot for faster usage.
+    """
+    sns.set()
+    if figsize:
+        plt.figure(figsize=figsize)
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    for (name, i) in y.items():
+        if smooth:
+            x_new = np.linspace(min(x), max(x), len(x) * 50)
+            y_smooth = spline(x, i, x_new)
+            if name:
+                plt.plot(x_new, y_smooth, label=name)
+            else:
+                plt.plot(x_new, y_smooth)
+        elif name:
+            plt.plot(x, i, label=name)
+        else:
+            plt.plot(x, i)
+        plt.legend(loc='upper left')
+
+    plt.show()

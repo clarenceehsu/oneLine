@@ -11,8 +11,8 @@ from ..machinelearning.supervised import Supervised
 class OneData(Plot, Pandas, Supervised):
     """
     That's the initial of the OneData Object.
-    Now you can input list, DataFrame or a list to get a OneData object, and the format will be automatically convert to
-    DataFrame.
+    A input list, DataFrame or a list can fit a OneData object, and the object will be automatically convert to
+    DataFrame, which is the sub-object of OneData.
     The structure of OneData:
         1. self.data
             It's the main DataFrame dataset. And all the built-in functions were based on it.
@@ -60,6 +60,15 @@ class OneData(Plot, Pandas, Supervised):
         else:
             print('Input format error, please in put a valid dataset that satisfied OneData.')
             quit()
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, item):
+        return OneData(pd.DataFrame(self.data[item]))
+
+    def show(self):
+        print(self.data)
 
     def make_dataset(self, train=0.0, hold_out=0.0, save=False, filepath=''):
         """
@@ -110,14 +119,18 @@ class OneData(Plot, Pandas, Supervised):
 
         return summ
 
-    def fill_na(self):
+    def fill_na(self, method='mode'):
         """
         Fill the NA values.
+        method: mode, nan
         """
         data = self.data
-        for key, value in data.isnull().sum().items():
-            if value:
-                data[key].fillna(self.data[key].mode()[0], inplace=True)
+        if method == 'mode':
+            for key, value in data.isnull().sum().items():
+                if value:
+                    data[key].fillna(self.data[key].mode()[0], inplace=True)
+        elif method == 'nan':
+            data = data.fillna(np.nan)
         return OneData(data)
 
     def append(self, others, ignore_index=True):
@@ -148,7 +161,7 @@ class OneData(Plot, Pandas, Supervised):
         """
         df = self.data
         start_mem = df.memory_usage().sum() / 1024 ** 2
-        print("Memory usage of dataframe is {:.2f} MB".format(start_mem))
+        print("Memory usage of dataframe is {:.3f} MB".format(start_mem))
 
         for col in df.columns:
             if is_datetime(df[col]) or is_categorical_dtype(df[col]):
@@ -178,7 +191,7 @@ class OneData(Plot, Pandas, Supervised):
                 df[col] = df[col].astype("category")
 
         end_mem = df.memory_usage().sum() / 1024 ** 2
-        print("Memory usage after optimization is: {:.2f} MB".format(end_mem))
+        print("Memory usage after optimization is: {:.3f} MB".format(end_mem))
         print("Decreased by {:.1f}%".format(100 * (start_mem - end_mem) / start_mem))
 
         return OneData(self.data)

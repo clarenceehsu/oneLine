@@ -2,41 +2,64 @@ from ..modules.data import *
 
 
 class Pandas:
+    """
+    That a module inherit some useful functions from Pandas.
+    """
     def __init__(self, *args):
         self.data = pd.DataFrame()
 
-    # return the shape of the core
     @property
     def shape(self):
+        """
+        Return the shape of the data.
+        """
         return self.data.shape
 
     @property
     def length(self):
+        """
+        Return the length of the data.
+        """
         return self.data.shape[0] * self.data.shape[1]
 
-    # return the head of the data
     def head(self, n=5):
+        """
+        Return the head of the data.
+        """
         return self.data.head(n=n)
 
     def info(self):
+        """
+        The info of the data, which is same as Pandas.
+        """
         return self.data.info()
 
-    # convert the core to list
     def to_list(self):
+        """
+        Convert the data to list.
+        """
         return np.array(self.data).tolist()
 
-    # convert the core to array
     def to_array(self):
+        """
+        Convert the data to array.
+        """
         return np.array(self.data)
 
-    # convert the core to DataFrame
     def to_df(self):
+        """
+        Convert the data to DataFrame,
+        """
         return self.data
 
-    # save to a .csv file
     def save_csv(self, filepath):
+        """
+        Save to a .csv file.
+        """
         self.data.to_csv(path_or_buf=filepath, index=False)
 
-    # save to a .xls file
     def save_excel(self, filepath):
+        """
+        Save to a .xls or .xlsx file.
+        """
         self.data.to_excel(excel_writer=filepath, index=False)

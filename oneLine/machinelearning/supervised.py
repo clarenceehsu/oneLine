@@ -9,13 +9,16 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 class Supervised:
+    """
+    That's the machine learning module for OneData.
+    """
     def __init__(self):
         self.data = ''
         self.train_data = ''
         self.test_data = ''
         self.model = ''
 
-    def linear_regression(self, x='', y=''):
+    def linear_regression(self, x: str = '', y: str = ''):
         x_train = x
         y_train = y
 
