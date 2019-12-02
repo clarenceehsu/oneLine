@@ -2,11 +2,14 @@ import os
 
 
 class OneDatalist:
-    def __init__(self, data_list=[], filepath=''):
-        if data_list:
-            self.data_list = data_list
+    def __init__(self, *args):
+        if isinstance(args[0], list):
+            self.data_list = args[0]
+        elif isinstance(args[0], str):
+            self.data_list = os.listdir(args[0])
         else:
-            self.data_list = os.listdir(filepath)
+            print('Input format error, please in put a valid dataset that satisfied OneData.')
+            quit()
 
     def shape(self):
         return len(self.data_list)

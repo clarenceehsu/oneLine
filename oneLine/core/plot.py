@@ -2,7 +2,7 @@ from ..modules.data import *
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.interpolate import spline
+from scipy.interpolate import interp1d
 
 
 class Plot:
@@ -12,7 +12,7 @@ class Plot:
     def __init__(self, *args):
         self.data = pd.DataFrame()
 
-    def fast_plot(self, x='', y=[], figsize=[], title='', xlabel='', ylabel='', smooth=False):
+    def fast_plot(self, x='', y=[], figsize=[], title='', xlabel='', ylabel='', smooth=False, insert_num=50):
         """
         It's a fast plot function to generate graph rapidly.
         :param figsize: The size of figure.
@@ -33,8 +33,8 @@ class Plot:
                 y_val = self.data[name]
                 if smooth:
                     x_new = np.linspace(min(x), max(x), len(x) * 50)
-                    y_smooth = spline(x, y_val, x_new)
-                    plt.plot(x_new, y_smooth, label=name)
+                    y_smooth = interp1d(x, y_val, kind='cubic')
+                    plt.plot(x_new, y_smooth(x_new), label=name)
                 else:
                     plt.plot(x, y_val, label=name)
                 plt.legend(loc='upper left')
@@ -43,8 +43,8 @@ class Plot:
                 y_val = self.data[name]
                 if smooth:
                     x_new = np.linspace(min(x), max(x), len(x) * 50)
-                    y_smooth = spline(x, y_val, x_new)
-                    plt.plot(x_new, y_smooth, label=name)
+                    y_smooth = interp1d(x, y_val, kind='cubic')
+                    plt.plot(x_new, y_smooth(x_new), label=name)
                 else:
                     plt.plot(x, y_val, label=name)
                 plt.legend(loc='upper left')
@@ -75,7 +75,8 @@ class Plot:
     def counting_values(self, variable1, variable2):
         return self.data[[variable1, variable2]][self.data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False)
 
-def fast_plot(x, y, figsize=[], title='', xlabel='', ylabel='', smooth=False):
+
+def fast_plot(x, y, figsize=[], title='', xlabel='', ylabel='', smooth=False, insert_num=50):
     """
     That's a isolate fast_plot for faster usage.
     """
@@ -85,14 +86,15 @@ def fast_plot(x, y, figsize=[], title='', xlabel='', ylabel='', smooth=False):
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+
     for (name, i) in y.items():
         if smooth:
-            x_new = np.linspace(min(x), max(x), len(x) * 50)
-            y_smooth = spline(x, i, x_new)
+            x_new = np.linspace(min(x), max(x), len(x) * insert_num)
+            y_smooth = interp1d(x, i, kind='cubic')
             if name:
-                plt.plot(x_new, y_smooth, label=name)
+                plt.plot(x_new, y_smooth(x_new), label=name)
             else:
-                plt.plot(x_new, y_smooth)
+                plt.plot(x_new, y_smooth(x_new))
         elif name:
             plt.plot(x, i, label=name)
         else:
