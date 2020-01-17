@@ -1,7 +1,9 @@
-import pandas as pd
+import sys
+import traceback
 import numpy as np
-from pandas.api.types import is_datetime64_any_dtype as is_datetime
+import pandas as pd
 from pandas.api.types import is_categorical_dtype
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
 from .plot import Plot
 from .data_pd import Pandas
@@ -21,59 +23,94 @@ class OneData(Plot, Pandas, Supervised):
         *4. self.holdout_data
         These three parameters is unstable now, and it will be substituted in the future.
     """
+    def _raise_value_error(self):
+        raise ValueError('Input format error, please in put a valid dataset that satisfied OneData.')
 
     def __init__(self, *args):
+        """
+        Input data and convert it to DataFrame as a sub type of OneData.
+        """
         super().__init__(*args)
         self.train_data = ''
-        self.test_data = ''
-        self.holdout_data = ''
         self.model = ''
 
-        if isinstance(args[0], str):
-            file_form = args[0].split('.')[-1]
-            if file_form == 'csv':
-                self.data = pd.read_csv(args[0])
-            if file_form == 'xls' or file_form == 'xlsx':
-                self.data = pd.read_excel(args[0])
-            if file_form == 'json':
-                self.data = pd.read_json(args[0])
-            if file_form == 'sql':
-                self.data = pd.read_sql(args[0])
-        elif isinstance(args[0], pd.DataFrame):
-            self.data = args[0]
-        elif isinstance(args[0], np.ndarray):
-            self.data = pd.DataFrame(args[0])
-        elif isinstance(args[0], OneData):
-            self.data = args[0].data
-            self.train_data = args[0].train_data
-            self.test_data = args[0].test_data
-            self.holdout_data = args[0].holdout_data
-            self.model = args[0].model
-        elif isinstance(args[0], list):
-            if isinstance(args[0][0], int):
-                self.data = pd.DataFrame({0: args[0]})
+        try:
+            if not args:
+                pass
+
+            elif isinstance(args[0], str):
+                file_form = args[0].split('.')[-1]
+                if file_form == 'csv':
+                    self.data = pd.read_csv(args[0])
+                elif file_form == 'xls' or file_form == 'xlsx':
+                    self.data = pd.read_excel(args[0])
+                elif file_form == 'json':
+                    self.data = pd.read_json(args[0])
+                elif file_form == 'sql':
+                    self.data = pd.read_sql(args[0])
+                else:
+                    self._raise_value_error()
+            elif isinstance(args[0], pd.DataFrame):
+                self.data = args[0]
+            elif isinstance(args[0], np.ndarray):
+                self.data = pd.DataFrame(args[0])
+            elif isinstance(args[0], OneData):
+                self.data = args[0].data
+                self.holdout_data = args[0].holdout_data
+                self.model = args[0].model
+            elif isinstance(args[0], list):
+                self.data = pd.DataFrame(args[0])
             else:
-                temp = {}
-                for n in range(len(args[0])):
-                    temp[n] = args[0][n]
-                self.data = pd.DataFrame(temp)
-        else:
-            print('Input format error, please in put a valid dataset that satisfied OneData.')
+                self._raise_value_error()
+        except Exception:
+            traceback.print_exc(limit=1, file=sys.stdout)
             quit()
 
     def __len__(self):
+        """
+        Return the length of data.
+        """
         return len(self.data)
 
     def __getitem__(self, item):
+        """
+        getitem function.
+        """
         return OneData(pd.DataFrame(self.data[item]))
 
-    def show(self):
-        print(self.data)
-
-    def make_dataset(self, train=0.0, hold_out=0.0, save=False, filepath=''):
+    def __repr__(self):
         """
-        Create dataset from the data.
-        The proportion of the train core and hold-out data should be specified.
+        Change the print to pandas style.
+        """
+        print(self.data)
+        return ''
+
+    # ---------------------------------------------------------------- #
+
+    def show(self, info: bool = False):
+        """
+        Display the info of data.
+
+        While info = True, the output will contain the details of data like the shape property or others.
+        """
+        if not info:
+            print(self.data)
+        elif info:
+            all_usage = 0.0
+            usage = self.data.memory_usage().sum() / 1024 ** 2
+            shape = self.data.shape
+            columns = list(self.data.columns)
+            all_usage += usage
+            print(self.data)
+            print('\n - Shape: {}\n - Index:{}\n - Memory usage: {:.3f} MB\n'.format(shape, columns, usage))
+
+    def make_dataset(self, train: float = 0.0,
+                     hold_out: float = 0.0,
+                     save: bool = False,
+                     filepath: str = ''):
+        """
+        Create dataset function.
+        The proportion of the train data and hold-out data should be specified.
         """
         index_num = int(self.shape()[0] * train)
         self.train_data = self.data.iloc[:index_num, :]
@@ -116,10 +153,9 @@ class OneData(Plot, Pandas, Supervised):
         for name in summ['Name'].value_counts().index:
             summ.loc[summ['Name'] == name, 'Entropy'] = round(
                 stats.entropy(self.data[name].value_counts(normalize=True), base=2), 2)
+        print(summ)
 
-        return summ
-
-    def fill_na(self, method='mode'):
+    def fill_na(self, method: str = 'mode'):
         """
         Fill the NA values.
         method: mode, nan
@@ -133,7 +169,7 @@ class OneData(Plot, Pandas, Supervised):
             data = data.fillna(np.nan)
         return OneData(data)
 
-    def append(self, others, ignore_index=True):
+    def append(self, others, ignore_index: bool = True):
         """
         Append two dataset.
         """
@@ -142,10 +178,12 @@ class OneData(Plot, Pandas, Supervised):
         if isinstance(others, OneData):
             return OneData(self.data.append(others.data, ignore_index=ignore_index))
 
-    def drop(self, column=[], row=[]):
+    def drop(self, column: list = None, row: list = None):
         """
         The advanced function of DataFrame.drop, you can input a list of index to drop them.
         """
+        if column is None:
+            column = []
         data = self.data
         if column:
             data = data.drop(column, axis=1)
@@ -154,14 +192,13 @@ class OneData(Plot, Pandas, Supervised):
                 data = data.drop(n)
         return OneData(data)
 
-    def reduce_mem_usage(self, use_float16=False):
+    def reduce_mem_usage(self, use_float16: bool = False):
         """
-        That's a function from Kaggle. It can automatically distinguish the type of one single data and reset a suitable
-         type.
+        Automatically distinguish the type of one single data and reset a suitable type.
         """
         df = self.data
         start_mem = df.memory_usage().sum() / 1024 ** 2
-        print("Memory usage of dataframe is {:.3f} MB".format(start_mem))
+        print("Memory usage of DataFrame is {:.3f} MB".format(start_mem))
 
         for col in df.columns:
             if is_datetime(df[col]) or is_categorical_dtype(df[col]):
@@ -195,3 +232,21 @@ class OneData(Plot, Pandas, Supervised):
         print("Decreased by {:.1f}%".format(100 * (start_mem - end_mem) / start_mem))
 
         return OneData(self.data)
+
+
+def data_input(*args):
+    """
+    Input data as DataFrame.
+    """
+
+    file_form = args[0].split('.')[-1]
+    if file_form == 'csv':
+        data = pd.read_csv(args[0])
+    if file_form == 'xls' or file_form == 'xlsx':
+        data = pd.read_excel(args[0])
+    if file_form == 'json':
+        data = pd.read_json(args[0])
+    if file_form == 'sql':
+        data = pd.read_sql(args[0])
+
+    return data

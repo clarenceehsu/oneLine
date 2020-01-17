@@ -7,5 +7,3 @@ from scipy import stats
 
 import statsmodels
 from sklearn.metrics import accuracy_score
-
-from scipy.interpolate import spline

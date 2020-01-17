@@ -1,2 +1,2 @@
-from oneLine.core.data import OneData
-from oneLine.core.datalist import OneDatalist
+from oneLine.core.onedata import OneData
+from oneLine.core.onelist import OneList

@@ -22,6 +22,10 @@ class Pandas:
         """
         return self.data.shape[0] * self.data.shape[1]
 
+    @property
+    def columns(self):
+        return self.data.columns
+
     def head(self, n=5):
         """
         Return the head of the data.

@@ -11,20 +11,24 @@
 举个例子：
 
 ```python
-from oneLine import OneData, OneDatalist
-# oneLine 中的数据分为两种，一种是基于 DataFrame 类型扩展的 OneData 数据格式，一种是地址列表所代表的文件列表 OneDatalist 格式。
+    from oneLine import OneData, OneDatalist
+    # oneLine 中的数据分为两种，一种是基于 DataFrame 类型扩展的 OneData 数据格式，一种是地址列表所代表的文件列表 OneDatalist 格式。
 
-data = OneData('test.csv')  # 导入数据，格式可以是文件路径或者列表、DataFrame等
+    data = OneData('test.csv')  # 导入数据，格式可以是文件路径或者列表、DataFrame等
 
-data = data.fill_na() # 填补空缺值
+    data = data.fill_na() # 填补空缺值
 
-summary = data.summary() # 对数据 EDA （探索性分析）的简单总结
+    summary = data.summary() # 对数据 EDA （探索性分析）的简单总结
 
-comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的相关性分析并生成图
+    comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的相关性分析并生成图
 
 ```
 
 ## 更新日志
+
+### 1.17.2020
+
+- 改进了文件结构，增加了 Exception
 
 ### 12.2.2019
 
