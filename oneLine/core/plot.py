@@ -1,10 +1,10 @@
 import sys
 import traceback
+import numpy as np
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-
-from ..modules.data import *
 
 
 class Plot:

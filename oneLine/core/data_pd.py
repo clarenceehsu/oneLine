@@ -1,4 +1,5 @@
-from ..modules.data import *
+import numpy as np
+import pandas as pd
 
 
 class Pandas:
@@ -64,6 +65,6 @@ class Pandas:
 
     def save_excel(self, filepath):
         """
-        Save to a .xls or .xlsx file.
+        Save to a .xls or excel file.
         """
         self.data.to_excel(excel_writer=filepath, index=False)
