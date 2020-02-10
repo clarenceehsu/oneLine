@@ -130,8 +130,8 @@ class Plot:
         return self.data[[variable1, variable2]][self.data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False)
 
 
-def line_plot(x: list,
-              y: dict,
+def line_plot(x: list = None,
+              y: dict = None,
               figsize: list = None,
               title: str = None,
               xlabel: str = None,
@@ -148,18 +148,26 @@ def line_plot(x: list,
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
-    for (name, i) in y.items():
+    if isinstance(y, dict):
+        for (name, i) in y.items():
+            if smooth:
+                x_new = np.linspace(min(x), max(x), len(x) * insert_num)
+                y_smooth = interp1d(x, i, kind='cubic')
+                if name:
+                    plt.plot(x_new, y_smooth(x_new), label=name)
+                else:
+                    plt.plot(x_new, y_smooth(x_new))
+            elif name:
+                plt.plot(x, i, label=name)
+            else:
+                plt.plot(x, i)
+            plt.legend(loc='upper left')
+    elif isinstance(y, list):
         if smooth:
             x_new = np.linspace(min(x), max(x), len(x) * insert_num)
-            y_smooth = interp1d(x, i, kind='cubic')
-            if name:
-                plt.plot(x_new, y_smooth(x_new), label=name)
-            else:
-                plt.plot(x_new, y_smooth(x_new))
-        elif name:
-            plt.plot(x, i, label=name)
+            y_smooth = interp1d(x, y, kind='cubic')
+            plt.plot(x_new, y_smooth(x_new))
         else:
             plt.plot(x, i)
-        plt.legend(loc='upper left')
 
     plt.show()

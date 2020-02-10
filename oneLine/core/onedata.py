@@ -7,10 +7,9 @@ from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
 from .plot import Plot
 from .data_pd import Pandas
-from ..machinelearning.supervised import Supervised
 
 
-class OneData(Plot, Pandas, Supervised):
+class OneData(Plot, Pandas):
     """
     That's the initial of the OneData Object.
     A input list, DataFrame or a list can fit a OneData object, and the object will be automatically convert to
