@@ -131,7 +131,7 @@ class Plot:
 
 
 def line_plot(x: list = None,
-              y: dict = None,
+              y: dict or list = None,
               figsize: list = None,
               title: str = None,
               xlabel: str = None,
@@ -168,6 +168,27 @@ def line_plot(x: list = None,
             y_smooth = interp1d(x, y, kind='cubic')
             plt.plot(x_new, y_smooth(x_new))
         else:
-            plt.plot(x, i)
+            plt.plot(x, y)
 
     plt.show()
+
+def bar_plot(x: list = None,
+              y: list = None,
+              figsize: list = None,
+              title: str = None,
+              xlabel: str = None,
+              ylabel: str = None):
+    """
+    That's a isolate bar_plot for faster usage.
+    """
+    sns.set()
+    if figsize:
+        plt.figure(figsize=figsize)
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    sns.barplot(x=x, y=y)
+
+    plt.show()
+
