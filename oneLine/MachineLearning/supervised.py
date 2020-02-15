@@ -6,31 +6,37 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import PolynomialFeatures
 
 
 class Supervised:
     """
     That's the machine learning module for OneData.
     """
-    def linear_regression(self, x: list = None, y: list = None):
+    def linear_regression(self, x: list = None, y: list = None, degree: int = 1, include_bias: bool = False, info: bool = False):
         x_train = x
         y_train = y
 
         self.model = LinearRegression()
+        if degree > 1:
+            pf = PolynomialFeatures(degree=degree, include_bias=include_bias)
+            x_train = pf.fit_transform(x_train)
         self.model.fit(x_train, y_train)
         self.model.score(x_train, y_train)
-        print('Coefficient: \n', self.model.coef_)
-        print('Intercept: \n', self.model.intercept_)
+        if info:
+            print('Coefficient: \n', self.model.coef_)
+            print('Intercept: \n', self.model.intercept_)
 
-    def logistic_regression(self, x: list = None, y: list = None):
+    def logistic_regression(self, x: list = None, y: list = None, info: bool = False):
         x_train = x
         y_train = y
 
         self.model = LogisticRegression()
         self.model.fit(x_train, y_train)
         self.model.score(x_train, y_train)
-        print('Coefficient: \n', self.model.coef_)
-        print('Intercept: \n', self.model.intercept_)
+        if info:
+            print('Coefficient: \n', self.model.coef_)
+            print('Intercept: \n', self.model.intercept_)
 
     def decision_tree(self, x: list = None, y: list = None):
         x_train = x

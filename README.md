@@ -1,6 +1,6 @@
-# oneLine 一行
+# oneLine
 
- Make every step oneLine. 一行一步，一步一行。
+ Make every step oneLine. 
 
 ## 这是什么？
 
@@ -18,7 +18,7 @@
 
     summary = data.summary() # EDA 的简单总结
 
-    comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的相关性分析并生成图
+    data.comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的相关性分析并生成图
 
 ```
 
