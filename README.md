@@ -2,23 +2,28 @@
 
  Make every step oneLine. 
 
-## 这是什么？
+## What is it?
 
-提供了一些库的高级封装，旨在提供更加简单的运行模式和更简洁的代码。此库为学习和分析所用代码的集合，内容暂时不完善。
+It's a personal code set for learning and researching, and it provides advanced encapsulation of some libraries, designing to provide a simpler mode of operation and help people to simplify their codes concisely.
 
-举个例子：
+> This library is a collection of code used for learning and analysis, and the content is not perfect for the time being.
+
+For example:
 
 ```python
-    from oneLine import OneData, OneDatalist
-    # oneLine 中的数据分为两种，一种是基于 DataFrame 类型扩展的 OneData 数据格式，一种是地址列表所代表的文件列表 OneDatalist 格式。
+from oneLine import OneData, OneList
+# There are two kinds of data in oneLine. OneData is an extension of DataFrame, and OneList is a list of OneData.
 
-    data = OneData('test.csv')  # 导入数据，格式可以是文件路径或者列表、DataFrame 等
+data = OneData('test.csv')
+# input the data, which can be a address, ndarray or DataFrame
 
-    data = data.fill_na() # 填补空缺值
+data = data.fill_na()
+# fill the NaN values
 
-    summary = data.summary() # EDA 的简单总结
+summary = data.summary()
+# Simple summary of data
 
-    data.comparing_variables(data, 'parameter1', 'parameter2') # data 中两个参数的相关性分析并生成图
-
+data.comparing_variables(data, 'parameter1', 'parameter2')
+# compare two variables of data and generate a plot
 ```
 

@@ -12,18 +12,19 @@ class io:
 
         The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple copy uses.
         """
-        if folder:
-            shutil.copytree(source, to, ignore=shutil.ignore_patterns(ignore))
-        elif seq:
+        try:
+            if folder:
+                shutil.copytree(source, to, ignore=shutil.ignore_patterns(ignore))
+            else:
+                shutil.copyfile(source, to)
+        except TypeError:
             for src, des in seq:
                 shutil.copyfile(src, des)
-        else:
-            shutil.copyfile(source, to)
 
     @staticmethod
     def delete(source):
         """
-        Delete the file or folder.
+        Delete the file or folder, you can also input a list to delete files together.
         """
         if isinstance(source, str):
             shutil.rmtree(source)
@@ -38,11 +39,11 @@ class io:
 
         The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple move uses.
         """
-        if seq:
+        try:
+            shutil.move(source, to)
+        except TypeError:
             for src, des in seq.items():
                 shutil.move(src, des)
-        else:
-            shutil.move(source, to)
 
     @staticmethod
     def compress(source: str = None, to: str = None, seq: dict = None, format: str = None):
@@ -51,11 +52,11 @@ class io:
 
         The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple compress uses.
         """
-        if seq:
+        try:
+            shutil.make_archive(to, format, root_dir=source)
+        except TypeError:
             for src, des in seq.items():
                 shutil.make_archive(des, format, root_dir=src)
-        else:
-            shutil.make_archive(to, format, root_dir=source)
 
     @staticmethod
     def extract(source: str = None, to: str = None, seq: dict = None):
@@ -64,13 +65,13 @@ class io:
 
         The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple extract uses.
         """
-        if seq:
-            for src, des in seq.items():
-                format = source.split('.')[-1]
-                shutil.unpack_archive(filename=src, extract_dir=des, format=format)
-        else:
+        try:
             format = source.split('.')[-1]
             shutil.unpack_archive(filename=source, extract_dir=to, format=format)
+        except TypeError:
+            for src, des in seq.items():
+                format = src.split('.')[-1]
+                shutil.unpack_archive(filename=src, extract_dir=des, format=format)
 
     @staticmethod
     def read(path: str, mode: str = 'r+', readlines: bool = False):
