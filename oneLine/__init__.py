@@ -1,12 +1,8 @@
 # Core
-from .core.io import io
-from .core import OneData, OneList
-from .core.onedata import data_input
-from .core.plot import line_plot, bar_plot
-
+from .core import *
 
 # MachineLearning
-from .MachineLearning.supervised import Supervised
+from .MachineLearning import *
 
 __version__ = '1.0.4'
 __author__ = 'Zeesain Tsui'

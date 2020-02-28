@@ -1,15 +1,15 @@
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn import tree
 from sklearn import svm
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn import tree
 from sklearn.cluster import KMeans
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import PolynomialFeatures
 
 
-class Supervised:
+class MachineLearning:
     """
     That's the machine learning module for OneData.
     """

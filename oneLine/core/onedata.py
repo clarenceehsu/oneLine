@@ -30,8 +30,8 @@ class OneData(Plot, Pandas):
         Input data and convert it to DataFrame as a sub type of OneData.
         """
         super().__init__(*args)
-        self.train_data = ''
-        self.model = ''
+        self.train_data = None
+        self.model = None
 
         try:
             if not args:
