@@ -1,3 +1,4 @@
+import json
 import shutil
 
 
@@ -94,3 +95,19 @@ class io:
                 f.writelines(content)
             elif isinstance(content, str):
                 f.write(content)
+
+    @staticmethod
+    def load_json(path: str):
+        """
+        Load the json file
+        """
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    @staticmethod
+    def save_json(_dict: dict, path: str, indent=4, ensure_ascii=False):
+        """
+        Save a dictionary to json file
+        """
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(_dict, indent=indent, ensure_ascii=ensure_ascii))
