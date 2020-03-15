@@ -12,17 +12,17 @@ from .plot import Plot
 
 class OneData(DataFrame, ABC, Plot):
     """
-    That's the initial of the OneData Object.
-    A input list, DataFrame or a list can fit a OneData object, and the object will be automatically convert to
-    DataFrame, which is the sub-object of OneData.
-    The structure of OneData:
-        1. self.data
-            It's the main DataFrame dataset. And all the built-in functions were based on it.
-        *2. self.train_data
-        *3. self.test_data
-        *4. self.holdout_data
-        These three parameters is unstable now, and it will be substituted in the future.
+    That's the initial of the OneData class.
+    Acceptable type:
+        1. OneData
+        2. DataFrame
+        3. List
+        4. Numpy Array
+        5. String (the string should be a address of particular file, which can be automatically input based on format
+                   by OneData)
+    OneData is a advanced class of Pandas.DataFrame with more methods and all the features of DataFrame inherited.
     """
+
     def _raise_value_error(self):
         raise ValueError('Input format error, please in put a valid dataset that satisfied OneData.')
 
@@ -33,7 +33,6 @@ class OneData(DataFrame, ABC, Plot):
         try:
             if not args:
                 pass
-
             elif isinstance(args[0], str):
                 file_form = args[0].split('.')[-1]
                 if file_form == 'csv':
@@ -64,33 +63,31 @@ class OneData(DataFrame, ABC, Plot):
     def show(self, info: bool = False):
         """
         Display the info of data.
-
-        While info = True, the output will contain the details of data like the shape property or others.
+        :param info: stay True if a display of information is required
+        :return None
         """
-        if not info:
-            print(self.data)
-        elif info:
-            all_usage = 0.0
-            usage = self.memory_usage().sum() / 1024 ** 2
-            shape = self.shape
-            columns = list(self.columns)
-            all_usage += usage
-            print(self)
-            print('\n - Shape: {}\n - Index:{}\n - Memory usage: {:.3f} MB\n'.format(shape, columns, usage))
+        if info:
+            self.info()
+            print('\n - Shape: {}\n - Index:{}\n - Memory usage: {:.3f} MB\n'.format(self.shape, list(self.columns), self.memory_usage().sum() / 1024 ** 2))
+        print(self)
 
     def make_dataset(self, train: float = 0.0,
-                     hold_out: float = 0.0,
+                     holdout: float = 0.0,
                      save: bool = False,
                      filepath: str = None):
         """
         Create dataset function.
         The proportion of the train data and hold-out data should be specified.
+        :param train: the proportion of train data
+        :param holdout: the proportion of holdout data
+        :param save: set True if saving dataset is required
+        :param filepath: the path of dataset
         """
         index_num = int(self.shape[0] * train)
         train_data = self.iloc[:index_num, :]
 
-        if hold_out:
-            holdout_num = int(self.shape[0] * hold_out)
+        if holdout:
+            holdout_num = int(self.shape[0] * holdout)
             test_data = self.iloc[index_num:index_num + holdout_num, :]
             holdout_data = self.iloc[index_num + holdout_num:, :]
         else:
@@ -98,9 +95,9 @@ class OneData(DataFrame, ABC, Plot):
         if save:
             train_data.to_csv(path_or_buf=filepath.split('.')[0] + '_train.csv', index=False)
             test_data.to_csv(path_or_buf=filepath.split('.')[0] + '_test.csv', index=False)
-            if hold_out:
+            if holdout:
                 holdout_data.to_csv(path_or_buf=filepath.split('.')[0] + '_holdout.csv', index=False)
-        elif hold_out:
+        elif holdout:
             return OneData(train_data), OneData(holdout_data), OneData(test_data)
         else:
             return OneData(train_data), OneData(test_data)
@@ -109,6 +106,7 @@ class OneData(DataFrame, ABC, Plot):
         """
         Return a summary of the whole dataset.
         the stats from scipy is used to calculate the Entropy.
+        :param info: stay True if a display of information is required
         """
         from scipy import stats
 
@@ -133,8 +131,8 @@ class OneData(DataFrame, ABC, Plot):
 
     def fill_na(self, method: str = 'mode'):
         """
-        Fill the NA values.
-        method: mode, nan
+        Fill the NaN values.
+        :param method: the way to fill the NaN values, which contains mode and nan methods
         """
         data = self
         if method == 'mode':
@@ -145,9 +143,11 @@ class OneData(DataFrame, ABC, Plot):
             data = data.fillna(np.nan)
         return OneData(data)
 
-    def delete(self, column: list = None, row: list = None):
+    def remove(self, column: list = None, row: list = None):
         """
         The advanced function of DataFrame.drop, you can input a list of index to drop them.
+        :param column: the list of column you want to remove
+        :param row: the list of row you want to remove
         """
         data = DataFrame(self)
         if column is None:
@@ -159,21 +159,40 @@ class OneData(DataFrame, ABC, Plot):
                 data = data.drop(n)
         return OneData(data)
 
-    def counting_values(self, variable1: str = None, variable2: str = None):
-        try:
-            if not variable1 or not variable2:
-                self._raise_plot_value_error('variable1 and variable2')
-        except Exception:
-            traceback.print_exc(limit=1, file=sys.stdout)
-            quit()
+    def add_var(self, exist, new, mapper=None):
+        """
+        Add a new variable based on the calculating of exist variable.
+        :param exist: the exist variable column
+        :param new: the new variable column
+        :param mapper: the mapper applied to the exist variable
+        """
+        data = self
+        if mapper:
+            data[new] = list(map(mapper, data[exist]))
+        else:
+            data[new] = data[exist]
+        return data
 
-        return self[[variable1, variable2]][self.data[variable2].isnull() == False].groupby([variable1],
-                                                                                                 as_index=False).mean().sort_values(
-            by=variable2, ascending=False)
+    def means(self, variable: str = None, hue: str = None):
+        """
+        An advanced method of mean, which can calculate means with hue
+        :param variable: the variable to calculate means
+        :param hue: the hue for calculation
+        """
+        if hue:
+            return self[[hue, variable]][self[variable].isnull() == False].groupby([hue],
+                                                                               as_index=False).mean().sort_values(
+            by=variable, ascending=False)
+        elif variable:
+            return self.mean()[variable]
+        else:
+            return self.mean()
 
     def reduce_mem_usage(self, use_float16: bool = False, info: bool = True):
         """
         Automatically distinguish the type of one single data and reset a suitable type.
+        :param use_float16: use float16 or not
+        :param info: stay True if a display of information is required
         """
         if info:
             start_mem = self.memory_usage().sum() / 1024 ** 2
@@ -216,7 +235,7 @@ class OneData(DataFrame, ABC, Plot):
 
 def data_input(*args):
     """
-    Input data as DataFrame.
+    A independent method for data input as DataFrame, which will automatically input based on the type of files.
     """
 
     file_form = args[0].split('.')[-1]
