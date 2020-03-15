@@ -11,8 +11,8 @@ It's a personal code set for learning and researching, and it provides advanced 
 For example:
 
 ```python
-from oneLine import OneData, OneList
-# There are two kinds of data in oneLine. OneData is an extension of DataFrame, and OneList is a list of OneData.
+from oneLine import OneData
+# This how we measure data in oneLine. OneData is an extension class of DataFrame.
 
 data = OneData('test.csv')
 # input the data, which can be a address, ndarray or DataFrame

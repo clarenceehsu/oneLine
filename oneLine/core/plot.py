@@ -13,23 +13,28 @@ class Plot:
     """
 
     def _raise_plot_value_error(self, s: str):
-        raise ValueError(f'The parameter { s } missed.')
+        raise ValueError(f'The parameter {s} missed.')
 
     def __init__(self, *args):
-        self.data = pd.DataFrame()
+        self = pd.DataFrame()
 
     def line_plot(self, x: str = None,
-                        y: list = None,
-                        figsize: list = None,
-                        title: str = None,
-                        xlabel: str = None,
-                        ylabel: str = None,
-                        smooth: bool = False,
-                        insert_num: int = 50,
-                        label_loc: str = 'upper left'):
+                  y: list = None,
+                  figsize: list = None,
+                  title: str = None,
+                  xlabel: str = None,
+                  ylabel: str = None,
+                  smooth: bool = False,
+                  insert_num: int = 50,
+                  label_loc: str = 'upper left'):
         """
         It's a fast plot function to generate graph rapidly.
+        :param x: the x
+        :param y: the y
         :param figsize: The size of figure.
+        :param title: the title of plot
+        :param xlabel: label of x
+        :param ylabel: label of y
         :param smooth: Set it True if the curve smoothing needed.
         :param insert_num: define the number for smooth function.
         :param label_loc: The location of the labels in plot.
@@ -41,12 +46,12 @@ class Plot:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         if x:
-            x = self.data[x]
+            x = self[x]
         else:
-            x = list(self.data.index)
+            x = list(self.index)
         if y:
             for name in y:
-                y_val = self.data[name]
+                y_val = self[name]
                 if smooth:
                     x_new = np.linspace(min(x), max(x), len(x) * insert_num)
                     y_smooth = interp1d(x, y_val, kind='cubic')
@@ -55,8 +60,8 @@ class Plot:
                     plt.plot(x, y_val, label=name)
                 plt.legend(loc=label_loc)
         else:
-            for name in list(self.data.columns):
-                y_val = self.data[name]
+            for name in list(self.columns):
+                y_val = self[name]
                 if smooth:
                     x_new = np.linspace(min(x), max(x), len(x) * insert_num)
                     y_smooth = interp1d(x, y_val, kind='cubic')
@@ -68,8 +73,8 @@ class Plot:
         plt.show()
 
     def count_plot(self, x: str = None,
-                         hue: str = None,
-                         figsize: list = None):
+                   hue: str = None,
+                   figsize: list = None):
         """
         Generate the correction graph
         :param x: The x.
@@ -86,12 +91,12 @@ class Plot:
         sns.set()
         if figsize:
             plt.figure(figsize=figsize)
-        sns.countplot(x=x, hue=hue, data=self.data)
+        sns.countplot(x=x, hue=hue, data=self)
         plt.show()
 
     def corr_plot(self, parameters: list = None,
-                        figsize: list = None,
-                        annot: bool = True):
+                  figsize: list = None,
+                  annot: bool = True):
         """
         Generate the correction graph
         :param parameters: The parameters selected.
@@ -102,32 +107,27 @@ class Plot:
         if figsize:
             plt.figure(figsize=figsize)
         if parameters:
-            sns.heatmap(self.data[parameters].corr(), annot=annot)
+            sns.heatmap(self[parameters].corr(), annot=annot)
         else:
-            sns.heatmap(self.data.corr(), annot=annot)
+            sns.heatmap(self.corr(), annot=annot)
         plt.show()
 
-    def comparing_variables(self, variable1: str = None, variable2: str = None):
+    def comparing_variables(self, variable1: str = None, variable2: str = None, show: bool = True):
         try:
             if not variable1 or not variable2:
                 self._raise_plot_value_error('variable1 and variable2')
+            elif self[variable1].dtype == 'object' or self[variable2].dtype == 'object':
+                raise TypeError('The type of parameters should be int or float, rather than object.')
         except Exception:
             traceback.print_exc(limit=1, file=sys.stdout)
             quit()
 
-        print(self.data[[variable1, variable2]][self.data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False))
-        sns.FacetGrid(self.data, col=variable2).map(sns.distplot, variable1)
-        plt.show()
-
-    def counting_values(self, variable1: str = None, variable2: str = None):
-        try:
-            if not variable1 or not variable2:
-                self._raise_plot_value_error('variable1 and variable2')
-        except Exception:
-            traceback.print_exc(limit=1, file=sys.stdout)
-            quit()
-
-        return self.data[[variable1, variable2]][self.data[variable2].isnull() == False].groupby([variable1], as_index=False).mean().sort_values(by=variable2, ascending=False)
+        print(self[[variable1, variable2]][self[variable2].isnull() == False].groupby([variable1],
+                                                                                                as_index=False).mean().sort_values(
+            by=variable2, ascending=False))
+        sns.FacetGrid(self, col=variable2).map(sns.distplot, variable1)
+        if show:
+            plt.show()
 
 
 def line_plot(x: list = None,
@@ -172,12 +172,13 @@ def line_plot(x: list = None,
 
     plt.show()
 
+
 def bar_plot(x: list = None,
-              y: list = None,
-              figsize: list = None,
-              title: str = None,
-              xlabel: str = None,
-              ylabel: str = None):
+             y: list = None,
+             figsize: list = None,
+             title: str = None,
+             xlabel: str = None,
+             ylabel: str = None):
     """
     That's a isolate bar_plot for faster usage.
     """
@@ -191,4 +192,3 @@ def bar_plot(x: list = None,
     sns.barplot(x=x, y=y)
 
     plt.show()
-
