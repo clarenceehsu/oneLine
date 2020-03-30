@@ -26,7 +26,8 @@ class Plot:
                   ylabel: str = None,
                   smooth: bool = False,
                   insert_num: int = 50,
-                  label_loc: str = 'upper left'):
+                  label_loc: str = 'upper left',
+                  show: bool = True):
         """
         It's a fast plot function to generate graph rapidly.
         :param x: the x
@@ -38,6 +39,7 @@ class Plot:
         :param smooth: Set it True if the curve smoothing needed.
         :param insert_num: define the number for smooth function.
         :param label_loc: The location of the labels in plot.
+        :param show: plt.show will run if true
         """
         sns.set()
         if figsize:
@@ -69,17 +71,19 @@ class Plot:
                 else:
                     plt.plot(x, y_val, label=name)
                 plt.legend(loc='upper left')
-
-        plt.show()
+        if show:
+            plt.show()
 
     def count_plot(self, x: str = None,
                    hue: str = None,
-                   figsize: list = None):
+                   figsize: list = None,
+                   show: bool = True):
         """
         Generate the correction graph
         :param x: The x.
         :param hue: The hue.
         :param figsize: The size of figure.
+        :param show: plt.show will run if true
         """
         try:
             if not x:
@@ -92,16 +96,19 @@ class Plot:
         if figsize:
             plt.figure(figsize=figsize)
         sns.countplot(x=x, hue=hue, data=self)
-        plt.show()
+        if show:
+            plt.show()
 
     def corr_plot(self, parameters: list = None,
                   figsize: list = None,
-                  annot: bool = True):
+                  annot: bool = True,
+                  show: bool = True):
         """
         Generate the correction graph
         :param parameters: The parameters selected.
         :param figsize: The size of figure.
         :param annot: Display the annotation or not.
+        :param show: plt.show will run if true
         """
         sns.set()
         if figsize:
@@ -110,9 +117,12 @@ class Plot:
             sns.heatmap(self[parameters].corr(), annot=annot)
         else:
             sns.heatmap(self.corr(), annot=annot)
-        plt.show()
+        if show:
+            plt.show()
 
-    def comparing_variables(self, variable1: str = None, variable2: str = None, show: bool = True):
+    def comparing_variables(self, variable1: str = None,
+                            variable2: str = None,
+                            show: bool = True):
         try:
             if not variable1 or not variable2:
                 self._raise_plot_value_error('variable1 and variable2')
@@ -137,7 +147,8 @@ def line_plot(x: list = None,
               xlabel: str = None,
               ylabel: str = None,
               smooth: bool = False,
-              insert_num: int = 50):
+              insert_num: int = 50,
+              show: bool = True):
     """
     That's a isolate line_plot for faster usage.
     """
@@ -169,8 +180,8 @@ def line_plot(x: list = None,
             plt.plot(x_new, y_smooth(x_new))
         else:
             plt.plot(x, y)
-
-    plt.show()
+    if show:
+        plt.show()
 
 
 def bar_plot(x: list = None,
@@ -178,7 +189,8 @@ def bar_plot(x: list = None,
              figsize: list = None,
              title: str = None,
              xlabel: str = None,
-             ylabel: str = None):
+             ylabel: str = None,
+             show: bool = True):
     """
     That's a isolate bar_plot for faster usage.
     """
@@ -190,5 +202,5 @@ def bar_plot(x: list = None,
     plt.ylabel(ylabel)
 
     sns.barplot(x=x, y=y)
-
-    plt.show()
+    if show:
+        plt.show()

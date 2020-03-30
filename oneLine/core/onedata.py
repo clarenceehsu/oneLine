@@ -30,32 +30,31 @@ class OneData(DataFrame, ABC, Plot):
         """
         Input data and convert it to DataFrame as a sub type of OneData.
         """
-        try:
-            if not args:
-                pass
-            elif isinstance(args[0], str):
-                file_form = args[0].split('.')[-1]
-                if file_form == 'csv':
-                    data = pd.read_csv(args[0])
-                elif file_form == 'xls' or file_form == 'xlsx':
-                    data = pd.read_excel(args[0])
-                elif file_form == 'json':
-                    data = pd.read_json(args[0])
-                elif file_form == 'sql':
-                    data = pd.read_sql(args[0])
-                else:
-                    self._raise_value_error()
-            elif isinstance(args[0], (pd.DataFrame, OneData)):
-                data = args[0]
-            elif isinstance(args[0], np.ndarray):
-                data = pd.DataFrame(args[0])
-            elif isinstance(args[0], list):
-                data = pd.DataFrame(args[0])
+        data = None
+        if not args:
+            pass
+        elif isinstance(args[0], str):
+            file_form = args[0].split('.')[-1]
+            if file_form == 'csv':
+                data = pd.read_csv(args[0])
+            elif file_form == 'xls' or file_form == 'xlsx':
+                data = pd.read_excel(args[0])
+            elif file_form == 'json':
+                data = pd.read_json(args[0])
+            elif file_form == 'pkl':
+                data = pd.read_pickle(args[0])
+            elif file_form == 'hdf':
+                data = pd.read_hdf(args[0])
             else:
                 self._raise_value_error()
-        except Exception:
-            traceback.print_exc(limit=1, file=sys.stdout)
-            quit()
+        elif isinstance(args[0], (pd.DataFrame, OneData)):
+            data = args[0]
+        elif isinstance(args[0], np.ndarray):
+            data = pd.DataFrame(args[0])
+        elif isinstance(args[0], list):
+            data = pd.DataFrame(args[0])
+        else:
+            self._raise_value_error()
         super().__init__(data=data)
 
     # ---------------------------------------------------------------- #
@@ -68,7 +67,8 @@ class OneData(DataFrame, ABC, Plot):
         """
         if info:
             self.info()
-            print('\n - Shape: {}\n - Index:{}\n - Memory usage: {:.3f} MB\n'.format(self.shape, list(self.columns), self.memory_usage().sum() / 1024 ** 2))
+            print('\n - Shape: {}\n - Index:{}\n - Memory usage: {:.3f} MB\n'
+                  .format(self.shape, list(self.columns), self.memory_usage().sum() / 1024 ** 2))
         print(self)
 
     def make_dataset(self, train: float = 0.0,
@@ -85,6 +85,7 @@ class OneData(DataFrame, ABC, Plot):
         """
         index_num = int(self.shape[0] * train)
         train_data = self.iloc[:index_num, :]
+        holdout_data = None
 
         if holdout:
             holdout_num = int(self.shape[0] * holdout)
@@ -149,7 +150,7 @@ class OneData(DataFrame, ABC, Plot):
         :param column: the list of column you want to remove
         :param row: the list of row you want to remove
         """
-        data = DataFrame(self)
+        data = self
         if column is None:
             column = []
         if column:
@@ -181,8 +182,8 @@ class OneData(DataFrame, ABC, Plot):
         """
         if hue:
             return self[[hue, variable]][self[variable].isnull() == False].groupby([hue],
-                                                                               as_index=False).mean().sort_values(
-            by=variable, ascending=False)
+                                                                                   as_index=False).mean().sort_values(
+                by=variable, ascending=False)
         elif variable:
             return self.mean()[variable]
         else:
@@ -232,12 +233,22 @@ class OneData(DataFrame, ABC, Plot):
 
         return OneData(self)
 
+    def items(self, index=True, name="Pandas"):
+        return self.itertuples(index=index, name=name)
+
+    def select_raw(self, indices: dict, reset_index: bool = False):
+        df = self
+        for variable, value in indices.items():
+            df = df[(df[variable] == value)]
+        if reset_index:
+            df = df.reset_index()
+        return OneData(df)
+
 
 def data_input(*args):
     """
     A independent method for data input as DataFrame, which will automatically input based on the type of files.
     """
-
     file_form = args[0].split('.')[-1]
     if file_form == 'csv':
         return pd.read_csv(args[0])
