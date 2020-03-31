@@ -1,13 +1,22 @@
-import sys
-import traceback
 import numpy as np
 from abc import ABC
 import pandas as pd
 from pandas import DataFrame
 from pandas.api.types import is_categorical_dtype
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
+from pandas._libs import lib
+from pandas.core.dtypes.common import (
+    is_hashable,
+    is_integer,
+    is_iterator,
+    is_list_like,
+)
+from pandas.core.dtypes.generic import ABCMultiIndex
+from pandas.core import common as com
+from pandas.core.indexing import convert_to_index_sliceable
 
 from .plot import Plot
+from .oneseries import OneSeries
 
 
 class OneData(DataFrame, ABC, Plot):
@@ -56,6 +65,50 @@ class OneData(DataFrame, ABC, Plot):
         else:
             self._raise_value_error()
         super().__init__(data=data)
+
+    def __getitem__(self, key):
+        key = lib.item_from_zerodim(key)
+        key = com.apply_if_callable(key, self)
+
+        if is_hashable(key):
+            if self.columns.is_unique and key in self.columns:
+                if self.columns.nlevels > 1:
+                    return OneSeries(self._getitem_multilevel(key))
+                return OneSeries(self._get_item_cache(key))
+
+        indexer = convert_to_index_sliceable(self, key)
+        if indexer is not None:
+            return OneData(self._slice(indexer, axis=0))
+
+        if isinstance(key, DataFrame):
+            return self.where(key)
+
+        if com.is_bool_indexer(key):
+            return OneData(self._getitem_bool_array(key))
+
+        is_single_key = isinstance(key, tuple) or not is_list_like(key)
+
+        if is_single_key:
+            if self.columns.nlevels > 1:
+                return self._getitem_multilevel(key)
+            indexer = self.columns.get_loc(key)
+            if is_integer(indexer):
+                indexer = [indexer]
+        else:
+            if is_iterator(key):
+                key = list(key)
+            indexer = self.loc._get_listlike_indexer(key, axis=1, raise_missing=True)[1]
+
+        if getattr(indexer, "dtype", None) == bool:
+            indexer = np.where(indexer)[0]
+
+        data = self._take_with_is_copy(indexer, axis=1)
+
+        if is_single_key:
+            if data.shape[1] == 1 and not isinstance(self.columns, ABCMultiIndex):
+                data = data[key]
+
+        return data
 
     # ---------------------------------------------------------------- #
 
@@ -119,9 +172,9 @@ class OneData(DataFrame, ABC, Plot):
         summ = summ[['Name', 'dtypes']]
         summ['Missing'] = self.isnull().sum().values
         summ['Uniques'] = self.nunique().values
-        summ['First Value'] = self.loc[0].values
-        summ['Second Value'] = self.loc[1].values
-        summ['Third Value'] = self.loc[2].values
+        summ['First Value'] = self.loc[self.index[0]].values
+        summ['Second Value'] = self.loc[self.index[1]].values
+        summ['Third Value'] = self.loc[self.index[2]].values
 
         for name in summ['Name'].value_counts().index:
             summ.loc[summ['Name'] == name, 'Entropy'] = round(
