@@ -33,13 +33,24 @@ class OneData(DataFrame, ABC, Plot):
     """
 
     def _raise_value_error(self):
+        """
+        The exception of ValueError.
+        :return: ValueError
+        """
         raise ValueError('Input format error, please in put a valid dataset that satisfied OneData.')
 
-    def __init__(self, *args):
+    def __init__(self, *args, index=None, columns=None, dtype=None, copy: bool = False):
         """
-        Input data and convert it to DataFrame as a sub type of OneData.
+        Input data or address string, and convert it to OneData format.
+        Now the input args supported:
+            1. str: a string will be recognized as the location of a file, and input with the format correctly
+            2. DataFrame & OneData
+            3. Dictionary
+            4. Numpy Array
+            ...
+        OneData inherits all the features of DataFrame.
         """
-        data = None
+        data = {}
         if not args:
             pass
         elif isinstance(args[0], str):
@@ -56,17 +67,17 @@ class OneData(DataFrame, ABC, Plot):
                 data = pd.read_hdf(args[0])
             else:
                 self._raise_value_error()
-        elif isinstance(args[0], (pd.DataFrame, OneData)):
-            data = args[0]
-        elif isinstance(args[0], np.ndarray):
-            data = pd.DataFrame(args[0])
-        elif isinstance(args[0], list):
-            data = pd.DataFrame(args[0])
         else:
+            data = args[0]
+        try:
+            super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)
+        except (ValueError, TypeError):
             self._raise_value_error()
-        super().__init__(data=data)
 
     def __getitem__(self, key):
+        """
+        The rebuilt method of __getitem__, which will redirect the DataFrame and Series to OneData and OneSeries.
+        """
         key = lib.item_from_zerodim(key)
         key = com.apply_if_callable(key, self)
 
@@ -248,8 +259,8 @@ class OneData(DataFrame, ABC, Plot):
         :param use_float16: use float16 or not
         :param info: stay True if a display of information is required
         """
+        start_mem = self.memory_usage().sum() / 1024 ** 2
         if info:
-            start_mem = self.memory_usage().sum() / 1024 ** 2
             print("Memory usage of DataFrame is {:.3f} MB".format(start_mem))
 
         for col in self.columns:
@@ -286,7 +297,7 @@ class OneData(DataFrame, ABC, Plot):
 
         return OneData(self)
 
-    def items(self, index=True, name="Pandas"):
+    def iter(self, index=True, name="Pandas"):
         return self.itertuples(index=index, name=name)
 
     def select_raw(self, indices: dict, reset_index: bool = False):
@@ -296,18 +307,3 @@ class OneData(DataFrame, ABC, Plot):
         if reset_index:
             df = df.reset_index()
         return OneData(df)
-
-
-def data_input(*args):
-    """
-    A independent method for data input as DataFrame, which will automatically input based on the type of files.
-    """
-    file_form = args[0].split('.')[-1]
-    if file_form == 'csv':
-        return pd.read_csv(args[0])
-    elif file_form == 'xls' or file_form == 'xlsx':
-        return pd.read_excel(args[0])
-    elif file_form == 'json':
-        return pd.read_json(args[0])
-    elif file_form == 'sql':
-        return pd.read_sql(args[0])

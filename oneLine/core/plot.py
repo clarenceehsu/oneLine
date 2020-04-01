@@ -79,7 +79,7 @@ class Plot:
                    figsize: list = None,
                    show: bool = True):
         """
-        Generate the correction graph
+        Generate the count graph
         :param x: The x.
         :param hue: The hue.
         :param figsize: The size of figure.
