@@ -12,7 +12,7 @@ For example:
 
 ```python
 from oneLine import OneData
-# This how we measure data in oneLine. OneData is an extension class of DataFrame.
+# this how we measure data in oneLine. OneData is an extension class of DataFrame.
 
 data = OneData('test.csv')
 # input the data, which can be a address, ndarray or DataFrame
@@ -20,10 +20,10 @@ data = OneData('test.csv')
 data = data.fill_na()
 # fill the NaN values
 
-summary = data.summary()
-# Simple summary of data
+summary = data.summary(info=False)
+# simple summary of data, which will print the summary if info stays True
 
-data.comparing_variables(data, 'parameter1', 'parameter2')
-# compare two variables of data and generate a plot
+data.means('parameter1', hue='parameter2')
+# calculate the means, which can have a hue variable applied
 ```
 
