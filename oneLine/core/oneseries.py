@@ -15,6 +15,13 @@ class OneSeries(Series):
         return OneData
 
     def summary(self, info: bool = True):
+        """
+        Return a summary of the whole OneSeries dataset.
+        the stats from scipy is used to calculate the Entropy.
+        :param info: stay True if a display of information is required
+        """
+        from scipy import stats
+
         sum_info = {}
         length = self.shape[0]
         if str(self.dtype)[:3] == "int":
@@ -27,6 +34,8 @@ class OneSeries(Series):
             sum_info['Maximum'] = self.max()
             sum_info['Zeros'] = (self == 0).sum()
             sum_info['Zeros(%)'] = sum_info['Zeros'] / length
+            sum_info['Entropy'] = round(
+                stats.entropy(self.value_counts(normalize=True), base=2), 2)
             sum_info['Memory Size(KB)'] = self.memory_usage() / 1024
 
             if info:
@@ -36,6 +45,7 @@ class OneSeries(Series):
                 print('Means: {:.2f}'.format(sum_info['Means']))
                 print('Minimum: {}'.format(sum_info['Minimum']))
                 print('Maximum: {}'.format(sum_info['Maximum']))
+                print('Entropy: {}'.format(sum_info['Entropy']))
                 print('Memory Size: {:.1f}KB'.format(sum_info['Memory Size(KB)']))
 
         elif str(self.dtype) == "object":
@@ -43,11 +53,14 @@ class OneSeries(Series):
             sum_info['Unique(%)'] = sum_info['Unique'] / length
             sum_info['Missing'] = self.isnull().sum()
             sum_info['Missing(%)'] = sum_info['Missing'] / length
+            sum_info['Entropy'] = round(
+                stats.entropy(self.value_counts(normalize=True), base=2), 2)
             sum_info['Memory Size(KB)'] = self.memory_usage() / 1024
 
             if info:
                 print('Unique: {}({:.2f}%)'.format(sum_info['Unique'], sum_info['Unique(%)']))
                 print('Missing: {}({:.2f}%)'.format(sum_info['Missing'], sum_info['Missing(%)']))
+                print('Entropy: {}'.format(sum_info['Entropy']))
                 print('Memory Size: {:.2f}KB'.format(sum_info['Memory Size(KB)']))
 
         return self._one_data(sum_info, index=[0])
@@ -76,7 +89,6 @@ class OneSeries(Series):
                   ylabel: str = None,
                   smooth: bool = False,
                   insert_num: int = 50,
-                  label_loc: str = 'upper left',
                   show: bool = True):
         """
         It's a fast plot function to generate graph rapidly.

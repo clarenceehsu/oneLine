@@ -297,10 +297,22 @@ class OneData(DataFrame, ABC, Plot):
 
         return OneData(self)
 
-    def iter(self, index=True, name="Pandas"):
+    def iter(self, index=True, name="OneData"):
+        """
+        Iteration methods for fast using
+        :param index: If True, return the index as the first element of the tuple.
+        :param name: The name of the returned named tuples or None to return regular.
+        """
         return self.itertuples(index=index, name=name)
 
     def select_raw(self, indices: dict, reset_index: bool = False):
+        """
+        Select raw with particular indices.
+
+        For example:
+        a = a.select_raw({'Gender': 'Male'})  # it will returns the data that matched variable'Gender' == values'Male'
+        a = a.select_raw({'Gender': 'Male', 'Age': 20})  # it can also use for multiple matching
+        """
         df = self
         for variable, value in indices.items():
             df = df[(df[variable] == value)]

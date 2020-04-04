@@ -1,5 +1,10 @@
 ## 更新日志
 
+### 4.4.2020
+
+- 将 oneline 添加到了 PyPI，可以更方便地使用了
+- 修复了一些 bug，添加了部分功能的注释
+
 ### 3.31.2020
 
 - 在 OneData 的基础上添加了基于 Series 的 OneSeries 类，后续将添加更多针对 Series 数据的分析处理 methods

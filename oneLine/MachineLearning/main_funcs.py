@@ -11,11 +11,42 @@ from sklearn.preprocessing import PolynomialFeatures
 
 class MachineLearning:
     """
-    That's the machine learning module for OneData.
+    That's the machine learning module for analysis using, and it's based on the scikit-learn module, which contains
+    10 necessary ML methods.
+
+    For example:
+    a = MachineLearning(x=x, y=y)  # init with x, y data
+    a.linear_reqression()  # train with x, y data
+    a.predict(x_test)  # predict with the x_test data using trained model above
     """
-    def linear_regression(self, x: list = None, y: list = None, degree: int = 1, include_bias: bool = False, info: bool = False):
-        x_train = x
-        y_train = y
+    def __init__(self, x: list = None, y: list = None):
+        """
+        Initialze the dataset for modeling
+        :param x: the x data
+        :param y: the y data
+        """
+        self.x = x
+        self.y = y
+        self.model = None
+
+    def set_value(self, x: list = None, y: list = None):
+        """
+        Reset value method
+        :param x: the new x data
+        :param y: the new y data
+        """
+        self.x = x
+        self.y = y
+
+    def linear_regression(self, degree: int = 1, include_bias: bool = False, info: bool = False):
+        """
+        Linear Regression Method
+        :param degree: the degree
+        :param include_bias: include bias or not
+        :param info: show the info and parameters of the model
+        """
+        x_train = self.x
+        y_train = self.y
 
         self.model = LinearRegression()
         if degree > 1:
@@ -27,9 +58,13 @@ class MachineLearning:
             print('Coefficient: \n', self.model.coef_)
             print('Intercept: \n', self.model.intercept_)
 
-    def logistic_regression(self, x: list = None, y: list = None, info: bool = False):
-        x_train = x
-        y_train = y
+    def logistic_regression(self, info: bool = False):
+        """
+        Logistic Regression Method
+        :param info: show the info and parameters of the model
+        """
+        x_train = self.x
+        y_train = self.y
 
         self.model = LogisticRegression()
         self.model.fit(x_train, y_train)
@@ -38,48 +73,73 @@ class MachineLearning:
             print('Coefficient: \n', self.model.coef_)
             print('Intercept: \n', self.model.intercept_)
 
-    def decision_tree(self, x: list = None, y: list = None):
-        x_train = x
-        y_train = y
+    def decision_tree(self):
+        """
+        Decision Tree Method
+        """
+        x_train = self.x
+        y_train = self.y
 
         self.model = tree.DecisionTreeClassifier(criterion='gini')
         self.model.fit(x_train, y_train)
         self.model.score(x_train, y_train)
 
-    def svm(self, x: list = None, y: list = None):
-        x_train = x
-        y_train = y
+    def svm(self):
+        """
+        Support Vector Machine Method
+        """
+        x_train = self.x
+        y_train = self.y
 
         self.model = svm.svc()
         self.model.fit(x_train, y_train)
         self.model.score(x_train, y_train)
 
-    def naive_bayes(self, x: list = None, y: list = None):
-        x_train = self.data[x]
-        y_train = self.data[y]
+    def naive_bayes(self):
+        """
+        Naive Bayes Method
+        """
+        x_train = self.x
+        y_train = self.y
 
         self.model = GaussianNB()
         self.model.fit(x_train, y_train)
 
-    def kNN(self, x: list = None, y: list = None, n_nerghbors=6):
-        x_train = x
-        y_train = y
+    def knn(self, n_neighbors=6):
+        """
+        KNN methods
+        :param n_neighbors: the number of n-neighbors
+        """
+        x_train = self.x
+        y_train = self.y
 
-        self.model = KNeighborsClassifier(n_neighbors=n_nerghbors)
+        self.model = KNeighborsClassifier(n_neighbors=n_neighbors)
         self.model.fit(x_train, y_train)
 
-    def kmeans(self, x: list = None, n_clusters=6, random_state=0):
-        x_train = x
+    def kmeans(self, n_clusters=6, random_state=0):
+        """
+        K-Means Method
+        :param n_clusters: the number of clusters
+        :param random_state: the number of random state
+        """
+        x_train = self.x
 
         self.model = KMeans(n_clusters=n_clusters, random_state=random_state)
         self.model.fit(x_train)
 
-    def random_forest(self, x: list = None, y: list = None):
-        x_train = x
-        y_train = y
+    def random_forest(self):
+        """
+        Random Forest Method
+        """
+        x_train = self.x
+        y_train = self.y
 
         self.model = RandomForestClassifier()
         self.model.fit(x_train, y_train)
 
     def predict(self, x_test: list):
+        """
+        Predict method for prediction
+        :param x_test: the data for prediction
+        """
         return self.model.predict(x_test)

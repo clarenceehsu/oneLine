@@ -1,113 +1,102 @@
 import json
 import shutil
+from os.path import isfile, isdir
 
 
-class io:
+def ignore(*ignorance):
     """
-    That's a io class for file manufacture using.
+    A built-in ignore_patterns function.
     """
-    @staticmethod
-    def copy(source: str, to: str, seq: dict = None, folder: bool = False, ignore: list = None):
-        """
-        Copy a file or a folder to destination.
+    return shutil.ignore_patterns(*ignorance)
 
-        The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple copy uses.
-        """
-        try:
-            if folder:
-                shutil.copytree(source, to, ignore=shutil.ignore_patterns(ignore))
-            else:
-                shutil.copyfile(source, to)
-        except TypeError:
-            for src, des in seq:
-                shutil.copyfile(src, des)
 
-    @staticmethod
-    def delete(source):
-        """
-        Delete the file or folder, you can also input a list to delete files together.
-        """
-        if isinstance(source, str):
-            shutil.rmtree(source)
-        elif isinstance(source, list):
-            for n in source:
-                shutil.rmtree(n)
+def copy(source: str, to: str, ignore=None):
+    """
+    Copy a file or a folder to destination.
+    You can use io.ignore to ignore the particular files from copy process.
 
-    @staticmethod
-    def move(source: str = None, to: str = None, seq: dict = None):
-        """
-        Move file or folder.
+    For example: io.copy('input', 'new', ignore=io.ignore('*.csv'))
+    """
+    if isdir(source):
+        if ignore:
+            shutil.copytree(source, to, ignore=ignore)
+        else:
+            shutil.copytree(source, to)
+    elif isfile(source) and isfile(to):
+        shutil.copyfile(source, to)
+    else:
+        raise TypeError(f"Sorry, the source is { 'directory' if isdir(source) else 'file' } but destination is { 'directory' if isdir(to) else 'file' }")
 
-        The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple move uses.
-        """
-        try:
-            shutil.move(source, to)
-        except TypeError:
-            for src, des in seq.items():
-                shutil.move(src, des)
 
-    @staticmethod
-    def compress(source: str = None, to: str = None, seq: dict = None, format: str = None):
-        """
-        Compress files to a file.
+def delete(source):
+    """
+    Delete the file or folder.
+    """
+    shutil.rmtree(source)
 
-        The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple compress uses.
-        """
-        try:
-            shutil.make_archive(to, format, root_dir=source)
-        except TypeError:
-            for src, des in seq.items():
-                shutil.make_archive(des, format, root_dir=src)
 
-    @staticmethod
-    def extract(source: str = None, to: str = None, seq: dict = None):
-        """
-        Extract a compress file.
+def move(source: str = None, to: str = None):
+    """
+    Move file or folder.
+    """
+    shutil.move(source, to)
 
-        The seq is a dictionary for {source path : destination path} key-value pairs, which is for multiple extract uses.
-        """
-        try:
-            format = source.split('.')[-1]
-            shutil.unpack_archive(filename=source, extract_dir=to, format=format)
-        except TypeError:
-            for src, des in seq.items():
-                format = src.split('.')[-1]
-                shutil.unpack_archive(filename=src, extract_dir=des, format=format)
 
-    @staticmethod
-    def read(path: str, mode: str = 'r+', readlines: bool = False):
-        """
-        Read a file.
-        """
-        with open(path, mode) as f:
-            if readlines:
-                return f.readlines()
-            else:
-                return f.read()
+def compress(source: str = None, to: str = None, _format: str = None):
+    """
+    Compress files to a file.
+    """
+    shutil.make_archive(to, _format, root_dir=source)
 
-    @staticmethod
-    def write(content, path, mode: str = 'w+'):
-        """
-        Write string or list to file.
-        """
-        with open(path, mode) as f:
-            if isinstance(content, list):
-                f.writelines(content)
-            elif isinstance(content, str):
-                f.write(content)
 
-    @staticmethod
-    def load_json(path: str):
-        """
-        Load the json file
-        """
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+def extract(source: str = None, to: str = None):
+    """
+    Extract a compress file.
+    """
+    _format = source.split('.')[-1]
+    shutil.unpack_archive(filename=source, extract_dir=to, format=_format)
 
-    @staticmethod
-    def save_json(_dict: dict, path: str, indent=4, ensure_ascii=False):
-        """
-        Save a dictionary to json file
-        """
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(_dict, indent=indent, ensure_ascii=ensure_ascii))
+
+def read(path: str, mode: str = 'r+', readlines: bool = False, encoding: str = 'utf-8'):
+    """
+    That's a simple and fast function for reading a file.
+    It will return a string that contains all the content when readlines = False.
+    And will return a list if readlines = True.
+
+    WARNING: This is for only small size of files, which means that the bigger size will lead to a memory exception.
+    """
+    with open(path, mode, encoding=encoding) as f:
+        if readlines:
+            return f.readlines()
+        else:
+            return f.read()
+
+
+def write(content, path, mode: str = 'w+'):
+    """
+    Write string or list to file.
+
+    If the content is a list, it will be written with writelines mode.
+    And also the write mode will be used if the content is string.
+    """
+    with open(path, mode) as f:
+        if isinstance(content, list):
+            f.writelines(content)
+        elif isinstance(content, str):
+            f.write(content)
+
+
+def load_json(path: str):
+    """
+    Load the json file, which will return a dictionary.
+    """
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def save_json(_dict: dict, path: str, indent=4, ensure_ascii=False):
+    """
+    Save a dictionary to json file
+    """
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(_dict, indent=indent, ensure_ascii=ensure_ascii))

@@ -8,6 +8,16 @@ It's a personal code set for learning and researching, and it provides advanced 
 
 > This library is a collection of code used for learning and analysis, and the content is not perfect for the time being.
 
+## Installation
+
+You can install this module with command below:
+
+```
+pip install one-line
+```
+
+## How to use it?
+
 For example:
 
 ```python
