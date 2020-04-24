@@ -25,11 +25,13 @@ class Plot:
                   xlabel: str = None,
                   ylabel: str = None,
                   smooth: bool = False,
+                  kind: str = 'cubic',
                   insert_num: int = 50,
                   label_loc: str = 'upper left',
                   show: bool = True):
         """
         It's a fast plot function to generate graph rapidly.
+
         :param x: the x
         :param y: the y
         :param figsize: The size of figure.
@@ -37,6 +39,7 @@ class Plot:
         :param xlabel: label of x
         :param ylabel: label of y
         :param smooth: Set it True if the curve smoothing needed.
+        :param kind: The method for smooth.
         :param insert_num: define the number for smooth function.
         :param label_loc: The location of the labels in plot.
         :param show: plt.show will run if true
@@ -56,7 +59,7 @@ class Plot:
                 y_val = self[name]
                 if smooth:
                     x_new = np.linspace(min(x), max(x), len(x) * insert_num)
-                    y_smooth = interp1d(x, y_val, kind='cubic')
+                    y_smooth = interp1d(x, y_val, kind=kind)
                     plt.plot(x_new, y_smooth(x_new), label=name)
                 else:
                     plt.plot(x, y_val, label=name)
@@ -73,6 +76,8 @@ class Plot:
                 plt.legend(loc='upper left')
         if show:
             plt.show()
+
+        return plt
 
     def count_plot(self, x: str = None,
                    hue: str = None,
@@ -120,6 +125,8 @@ class Plot:
         if show:
             plt.show()
 
+        return plt
+
     def comparing_variables(self, variable1: str = None,
                             variable2: str = None,
                             show: bool = True):
@@ -139,6 +146,8 @@ class Plot:
         if show:
             plt.show()
 
+        return plt
+
 
 def line_plot(x: list = None,
               y: dict or list = None,
@@ -147,6 +156,7 @@ def line_plot(x: list = None,
               xlabel: str = None,
               ylabel: str = None,
               smooth: bool = False,
+              kind: str = 'cubic',
               insert_num: int = 50,
               show: bool = True):
     """
@@ -163,7 +173,7 @@ def line_plot(x: list = None,
         for (name, i) in y.items():
             if smooth:
                 x_new = np.linspace(min(x), max(x), len(x) * insert_num)
-                y_smooth = interp1d(x, i, kind='cubic')
+                y_smooth = interp1d(x, i, kind=kind)
                 if name:
                     plt.plot(x_new, y_smooth(x_new), label=name)
                 else:
@@ -182,6 +192,8 @@ def line_plot(x: list = None,
             plt.plot(x, y)
     if show:
         plt.show()
+
+    return plt
 
 
 def bar_plot(x: list = None,
@@ -204,3 +216,5 @@ def bar_plot(x: list = None,
     sns.barplot(x=x, y=y)
     if show:
         plt.show()
+
+    return plt

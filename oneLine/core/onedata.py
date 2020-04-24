@@ -135,37 +135,44 @@ class OneData(DataFrame, ABC, Plot):
                   .format(self.shape, list(self.columns), self.memory_usage().sum() / 1024 ** 2))
         print(self)
 
-    def make_dataset(self, train: float = 0.0,
-                     holdout: float = 0.0,
-                     save: bool = False,
-                     filepath: str = None):
+    def make_dataset(self, train_frac: float = None,
+                     save_to: str = None,
+                     random: bool = False,
+                     random_seed: int = None):
         """
         Create dataset function.
         The proportion of the train data and hold-out data should be specified.
-        :param train: the proportion of train data
-        :param holdout: the proportion of holdout data
-        :param save: set True if saving dataset is required
-        :param filepath: the path of dataset
+        :param train_frac: the proportion of train data
+        :param save_to: the path of dataset if you want to save it for other uses
+        :param random: set True if random dataset is needed
+        :param random_seed: the random seed of making dataset procession
         """
-        index_num = int(self.shape[0] * train)
-        train_data = self.iloc[:index_num, :]
-        holdout_data = None
-
-        if holdout:
-            holdout_num = int(self.shape[0] * holdout)
-            test_data = self.iloc[index_num:index_num + holdout_num, :]
-            holdout_data = self.iloc[index_num + holdout_num:, :]
+        if random:
+            train_data = self.sample(frac=train_frac, random_state=random_seed)
+            test_data = self.drop(train_data.index)
         else:
+            index_num = int(self.shape[0] * train_frac)
+            train_data = self.iloc[:index_num, :]
             test_data = self.iloc[index_num:, :]
-        if save:
-            train_data.to_csv(path_or_buf=filepath.split('.')[0] + '_train.csv', index=False)
-            test_data.to_csv(path_or_buf=filepath.split('.')[0] + '_test.csv', index=False)
-            if holdout:
-                holdout_data.to_csv(path_or_buf=filepath.split('.')[0] + '_holdout.csv', index=False)
-        elif holdout:
-            return OneData(train_data), OneData(holdout_data), OneData(test_data)
-        else:
-            return OneData(train_data), OneData(test_data)
+        if save_to:
+            train_data.to_csv(path_or_buf=save_to + './train_dataset.csv', index=False)
+            test_data.to_csv(path_or_buf=save_to + './test_dataset.csv', index=False)
+        return OneData(train_data), OneData(test_data)
+
+    def reverse(self, reset_index: bool = False, axis: str = 'row'):
+        """
+        Method for reversing the dataset
+        :param reset_index: true for reset the index of data frame
+        :param axis: set 'row' if the order of the rows is to be reversed, and set 'column' if the order of the column
+        is to be reversed
+        """
+        if axis == 'row':
+            if reset_index:
+                return OneData(self.loc[::-1].reset_index(drop=True))
+            else:
+                return OneData(self.loc[::-1])
+        elif axis == 'column':
+            return OneData(self.loc[:, ::-1])
 
     def summary(self, info: bool = True):
         """
@@ -305,7 +312,7 @@ class OneData(DataFrame, ABC, Plot):
         """
         return self.itertuples(index=index, name=name)
 
-    def select_raw(self, indices: dict, reset_index: bool = False):
+    def select_row(self, indices: dict, reset_index: bool = False):
         """
         Select raw with particular indices.
 

@@ -4,7 +4,8 @@ from .core import *
 # MachineLearning
 from .MachineLearning import *
 
-__version__ = '0.1.3b'
+# Information
+__version__ = '0.1.32'
 __author__ = 'Zeesain Tsui'
 __help__ = """
 ===============================================

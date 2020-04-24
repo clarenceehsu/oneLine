@@ -14,6 +14,14 @@ class OneSeries(Series):
         from .onedata import OneData
         return OneData
 
+    def __add__(self, other):
+        if isinstance(other, OneSeries):
+            return self._one_data({self.name: self, other.name: other})
+        elif isinstance(other, self._one_data):
+            other.insert(loc=0, column=self.name, value=self)
+            return other
+
+
     def summary(self, info: bool = True):
         """
         Return a summary of the whole OneSeries dataset.
@@ -39,9 +47,9 @@ class OneSeries(Series):
             sum_info['Memory Size(KB)'] = self.memory_usage() / 1024
 
             if info:
-                print('Unique: {}({:.2f}%)'.format(sum_info['Unique'], sum_info['Unique(%)']))
-                print('Missing: {}({:.2f}%)'.format(sum_info['Missing'], sum_info['Missing(%)']))
-                print('Zeros: {}({:.2f}%)'.format(sum_info['Zeros'], sum_info['Zeros(%)']))
+                print('Unique: {}({:.2f}%)'.format(sum_info['Unique'], sum_info['Unique(%)'] * 100))
+                print('Missing: {}({:.2f}%)'.format(sum_info['Missing'], sum_info['Missing(%)'] * 100))
+                print('Zeros: {}({:.2f}%)'.format(sum_info['Zeros'], sum_info['Zeros(%)'] * 100))
                 print('Means: {:.2f}'.format(sum_info['Means']))
                 print('Minimum: {}'.format(sum_info['Minimum']))
                 print('Maximum: {}'.format(sum_info['Maximum']))
@@ -58,12 +66,38 @@ class OneSeries(Series):
             sum_info['Memory Size(KB)'] = self.memory_usage() / 1024
 
             if info:
-                print('Unique: {}({:.2f}%)'.format(sum_info['Unique'], sum_info['Unique(%)']))
-                print('Missing: {}({:.2f}%)'.format(sum_info['Missing'], sum_info['Missing(%)']))
+                print('Unique: {}({:.2f}%)'.format(sum_info['Unique'], sum_info['Unique(%)'] * 100))
+                print('Missing: {}({:.2f}%)'.format(sum_info['Missing'], sum_info['Missing(%)'] * 100))
                 print('Entropy: {}'.format(sum_info['Entropy']))
                 print('Memory Size: {:.2f}KB'.format(sum_info['Memory Size(KB)']))
 
         return self._one_data(sum_info, index=[0])
+
+    def reverse(self, reset_index: bool = False):
+        """
+        Method for reversing the dataset
+        :param reset_index: true for reset the index of series
+        """
+        if reset_index:
+            return self.loc[::-1].reset_index(drop=True)
+        else:
+            return self.loc[::-1]
+
+    def top(self, n: int = 1):
+        """
+        Return the top of the values.
+        :param n: the number of value to return
+        """
+        return self.value_counts().nlargest(n=n)
+
+    def bottom(self, n: int = 1):
+        """
+        Return the bottom of the values
+        :param n: the number of value to return
+        """
+        return self.value_counts().nsmallest(n=n)
+
+    # ========================= Plot ========================= #
 
     def count_plot(self,
                    figsize: list = None,
