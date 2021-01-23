@@ -1,6 +1,7 @@
 import sys
 import traceback
 import numpy as np
+from numpy.lib.arraysetops import isin
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -19,15 +20,15 @@ class Plot:
         self = pd.DataFrame()
 
     def line_plot(self, x: str = None,
-                  y: list = None,
+                  y = None,
                   figsize: list = None,
                   title: str = None,
                   xlabel: str = None,
                   ylabel: str = None,
                   smooth: bool = False,
                   kind: str = 'cubic',
-                  insert_num: int = 50,
-                  label_loc: str = 'upper left',
+                  interval: int = 50,
+                  legend_loc: str = 'upper left',
                   show: bool = True):
         """
         It's a fast plot function to generate graph rapidly.
@@ -40,43 +41,62 @@ class Plot:
         :param ylabel: label of y
         :param smooth: Set it True if the curve smoothing needed.
         :param kind: The method for smooth.
-        :param insert_num: define the number for smooth function.
-        :param label_loc: The location of the labels in plot.
+        :param interval: define the number for smooth function.
+        :param legend_loc: The location of the legend in plot.
         :param show: plt.show will run if true
         """
         sns.set()
+
+        # data x pre-configuration process
+        # x will be used if x is specified, otherwise the default index would be used
+        if x:
+            x = self[x]
+        else:
+            x = list(self.index)
+
+        # data y pre-configuration process
+        # y can be a string or a list for multiple series plot
+        # oneline.Plot use inter1d for 1D data smoothing
+        if isinstance(y, str):
+            y_val = self[y]
+            if smooth:
+                x_new = np.linspace(min(x), max(x), len(x) * interval)
+                y_smooth = interp1d(x, y_val, kind=kind)
+                plt.plot(x_new, y_smooth(x_new), label=y)
+            else:
+                plt.plot(x, y_val, label=y)
+        elif isinstance(y, list):
+            for name in y:
+                y_val = self[name]
+                if smooth:
+                    x_new = np.linspace(min(x), max(x), len(x) * interval)
+                    y_smooth = interp1d(x, y_val, kind=kind)
+                    plt.plot(x_new, y_smooth(x_new), label=name)
+                else:
+                    plt.plot(x, y_val, label=name)
+
+        # the default plot if no argument input
+        else:
+            for name in list(self.columns):
+                y_val = self[name]
+                if smooth:
+                    x_new = np.linspace(min(x), max(x), len(x) * interval)
+                    y_smooth = interp1d(x, y_val, kind='cubic')
+                    plt.plot(x_new, y_smooth(x_new), label=name)
+                else:
+                    plt.plot(x, y_val, label=name)
+
+        # plt configuration
         if figsize:
             plt.figure(figsize=figsize)
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        if x:
-            x = self[x]
-        else:
-            x = list(self.index)
-        if y:
-            for name in y:
-                y_val = self[name]
-                if smooth:
-                    x_new = np.linspace(min(x), max(x), len(x) * insert_num)
-                    y_smooth = interp1d(x, y_val, kind=kind)
-                    plt.plot(x_new, y_smooth(x_new), label=name)
-                else:
-                    plt.plot(x, y_val, label=name)
-                plt.legend(loc=label_loc)
-        else:
-            for name in list(self.columns):
-                y_val = self[name]
-                if smooth:
-                    x_new = np.linspace(min(x), max(x), len(x) * insert_num)
-                    y_smooth = interp1d(x, y_val, kind='cubic')
-                    plt.plot(x_new, y_smooth(x_new), label=name)
-                else:
-                    plt.plot(x, y_val, label=name)
-                plt.legend(loc='upper left')
+        plt.legend(loc=legend_loc)
         if show:
             plt.show()
 
+        # return for advanced adjustment
         return plt
 
     def count_plot(self, x: str = None,
@@ -90,13 +110,8 @@ class Plot:
         :param figsize: The size of figure.
         :param show: plt.show will run if true
         """
-        try:
-            if not x:
-                self._raise_plot_value_error('x')
-        except Exception:
-            traceback.print_exc(limit=1, file=sys.stdout)
-            quit()
-
+        if not x:
+            self._raise_plot_value_error('x')
         sns.set()
         if figsize:
             plt.figure(figsize=figsize)
@@ -157,7 +172,7 @@ def line_plot(x: list = None,
               ylabel: str = None,
               smooth: bool = False,
               kind: str = 'cubic',
-              insert_num: int = 50,
+              interval: int = 50,
               show: bool = True):
     """
     That's a isolate line_plot for faster usage.
@@ -172,7 +187,7 @@ def line_plot(x: list = None,
     if isinstance(y, dict):
         for (name, i) in y.items():
             if smooth:
-                x_new = np.linspace(min(x), max(x), len(x) * insert_num)
+                x_new = np.linspace(min(x), max(x), len(x) * interval)
                 y_smooth = interp1d(x, i, kind=kind)
                 if name:
                     plt.plot(x_new, y_smooth(x_new), label=name)
@@ -185,7 +200,7 @@ def line_plot(x: list = None,
             plt.legend(loc='upper left')
     elif isinstance(y, list):
         if smooth:
-            x_new = np.linspace(min(x), max(x), len(x) * insert_num)
+            x_new = np.linspace(min(x), max(x), len(x) * interval)
             y_smooth = interp1d(x, y, kind='cubic')
             plt.plot(x_new, y_smooth(x_new))
         else:

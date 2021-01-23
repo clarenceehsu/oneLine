@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 from pandas import Series
+from pandas import DataFrame
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
@@ -14,13 +15,15 @@ class OneSeries(Series):
         from .onedata import OneData
         return OneData
 
-    def __add__(self, other):
+    def add(self, other):
         if isinstance(other, OneSeries):
             return self._one_data({self.name: self, other.name: other})
         elif isinstance(other, self._one_data):
             other.insert(loc=0, column=self.name, value=self)
             return other
-
+        elif isinstance(other, DataFrame):
+            other.insert(loc=0, column=self.name, value=self)
+            return self._one_data(other)
 
     def summary(self, info: bool = True):
         """
