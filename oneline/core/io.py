@@ -5,14 +5,14 @@ from os.path import isfile, isdir, exists
 
 
 class io:
-    @property
+    @staticmethod
     def ignore(*ignorance):
         """
         A built-in ignore_patterns function.
         """
         return shutil.ignore_patterns(*ignorance)
 
-    @property
+    @staticmethod
     def copy(source: str, to: str, ignore=None, follow_symlinks=True):
         """
         Copy a file or a folder to destination, which can be a folder or a file.
@@ -30,21 +30,21 @@ class io:
         else:
             raise TypeError(f"The file { source } is not exist.")
 
-    @property
+    @staticmethod
     def delete(source):
         """
         Delete the file or folder.
         """
         shutil.rmtree(source)
 
-    @property
+    @staticmethod
     def move(source: str = None, to: str = None):
         """
         Move file or folder.
         """
         shutil.move(source, to)
 
-    @property
+    @staticmethod
     def mkdir(path: str):
         """
         Create a new directory.
@@ -54,7 +54,7 @@ class io:
         else:
             os.mkdir(path)
 
-    @property
+    @staticmethod
     def read(path: str, mode: str = 'r', encoding: str = 'utf-8', errors=None):
         """
         That's a simple and fast read function for reading a file.
@@ -64,7 +64,7 @@ class io:
         with open(path, mode, encoding=encoding, errors=errors) as f:
             return f.read()
 
-    @property
+    @staticmethod
     def readlines(path: str, mode: str = 'r', encoding: str = 'utf-8', errors=None, ):
         """
         That's a simple and fast readlines function for reading a file.
@@ -74,7 +74,7 @@ class io:
         with open(path, mode, encoding=encoding, errors=errors) as f:
             return f.readlines()
 
-    @property
+    @staticmethod
     def write(content, path, mode: str = 'w+', encoding: str = 'utf-8', errors=None):
         """
         Write string or list to file.
@@ -88,7 +88,7 @@ class io:
             elif isinstance(content, str):
                 f.write(content)
 
-    @property
+    @staticmethod
     def load_json(path: str, encoding='utf-8'):
         """
         Load the json file, which will return a dictionary.
@@ -96,7 +96,7 @@ class io:
         with open(path, 'r', encoding=encoding) as f:
             return json.load(f)
 
-    @property
+    @staticmethod
     def save_json(_dict: dict, path: str, indent=4, ensure_ascii=False, encoding='utf-8'):
         """
         Save a dictionary to json file

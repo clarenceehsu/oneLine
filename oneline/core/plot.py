@@ -1,7 +1,6 @@
 import sys
 import traceback
 import numpy as np
-from numpy.lib.arraysetops import isin
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -20,7 +19,7 @@ class Plot:
         self = pd.DataFrame()
 
     def line_plot(self, x: str = None,
-                  y = None,
+                  y=None,
                   figsize: list = None,
                   title: str = None,
                   xlabel: str = None,

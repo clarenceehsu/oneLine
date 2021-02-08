@@ -1,3 +1,4 @@
+import collections
 import numpy as np
 from abc import ABC
 import pandas as pd
@@ -5,18 +6,42 @@ from pandas import DataFrame
 from pandas.api.types import is_categorical_dtype
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 from pandas._libs import lib
+from pandas.util._decorators import doc
 from pandas.core.dtypes.common import (
     is_hashable,
     is_integer,
     is_iterator,
     is_list_like,
 )
+from pandas.core.generic import NDFrame
 from pandas.core.dtypes.generic import ABCMultiIndex
 from pandas.core import common as com
 from pandas.core.indexing import convert_to_index_sliceable
 
 from .plot import Plot
 from .oneseries import OneSeries
+
+_shared_doc_kwargs = {
+    "axes": "index, columns",
+    "klass": "DataFrame",
+    "axes_single_arg": "{0 or 'index', 1 or 'columns'}",
+    "axis": """axis : {0 or 'index', 1 or 'columns'}, default 0
+        If 0 or 'index': apply function to each column.
+        If 1 or 'columns': apply function to each row.""",
+    "optional_by": """
+        by : str or list of str
+            Name or list of names to sort by.
+
+            - if `axis` is 0 or `'index'` then `by` may contain index
+              levels and/or column labels.
+            - if `axis` is 1 or `'columns'` then `by` may contain column
+              levels and/or index labels.""",
+    "optional_labels": """labels : array-like, optional
+            New labels / index to conform the axis specified by 'axis' to.""",
+    "optional_axis": """axis : int or str, optional
+            Axis to target. Can be either the axis name ('index', 'columns')
+            or number (0, 1).""",
+}
 
 
 class OneData(DataFrame, ABC, Plot):
@@ -32,12 +57,19 @@ class OneData(DataFrame, ABC, Plot):
     OneData is a advanced class of Pandas.DataFrame with more methods and all the features of DataFrame inherited.
     """
 
-    def _raise_value_error(self):
+    def _raise_format_error(self):
         """
-        The exception of ValueError.
+        The exception of ValueError when format was unsupported.
         :return: ValueError
         """
-        raise ValueError('Input format error, please in put a valid dataset that satisfied OneData.')
+        raise ValueError('Input format error, please input a valid dataset that satisfied OneData.')
+
+    def _raise_parameter_error(self, args):
+        """
+        The exception of ValueError when format was unsupported.
+        :return: ValueError
+        """
+        raise ValueError('Input parameter {} {} not exist.'.format(", ".join(args), "is" if len(args) == 1 else "are"))
 
     def __init__(self, *args, index=None, columns=None, dtype=None, copy: bool = False):
         """
@@ -66,13 +98,13 @@ class OneData(DataFrame, ABC, Plot):
             elif file_form == 'hdf':
                 data = pd.read_hdf(args[0])
             else:
-                self._raise_value_error()
+                self._raise_format_error()
         else:
             data = args[0]
         try:
             super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)
         except (ValueError, TypeError):
-            self._raise_value_error()
+            self._raise_format_error()
 
     def __getitem__(self, key):
         """
@@ -91,7 +123,7 @@ class OneData(DataFrame, ABC, Plot):
         if indexer is not None:
             return OneData(self._slice(indexer, axis=0))
 
-        if isinstance(key, DataFrame):
+        if isinstance(key, DataFrame) or isinstance(key, OneData):
             return self.where(key)
 
         if com.is_bool_indexer(key):
@@ -119,52 +151,79 @@ class OneData(DataFrame, ABC, Plot):
             if data.shape[1] == 1 and not isinstance(self.columns, ABCMultiIndex):
                 data = data[key]
 
-        return data
+        return OneData(data)
 
-    # ---------------------------------------------------------------- #
-
-    def show(self, info: bool = False):
+    def show(self, info: bool = False,
+             all_columns: bool = False,
+             all_rows: bool = False,
+             max_columns: int = None,
+             max_rows: int = None,
+             precision: int = None):
         """
-        Display the info of data.
+        Display the info and details of data.
+        The display options would be reset to the previous state after printing data, in other words, the options that
+        was edited in show() would not be inherited.
         :param info: stay True if a display of information is required
+        :param all_columns: reset the display of columns if columns equals to True
+        :param all_rows: reset the display of rows if rows equals to True
+        :param max_columns: the max columns of display
+        :param max_rows: the max rows of display
+        :param precision: a fast adjustment to the precision of display
         :return None
         """
         if info:
-            self.info()
-            print('\n - Shape: {}\n - Index:{}\n - Memory usage: {:.3f} MB\n'
-                  .format(self.shape, list(self.columns), self.memory_usage().sum() / 1024 ** 2))
+            self.info(memory_usage=False)
+            print('\n\n - Shape: {}\n - Index: {}\n - Memory usage: {:.3f} MB\n'
+                  .format(self.shape, ", ".join(self.columns), self.memory_usage().sum() / 1024 ** 2))
+        original_max_columns = pd.get_option('display.max_columns')
+        original_max_rows = pd.get_option('display.max_rows')
+        original_display_precision = pd.get_option('display.precision')
+        if max_columns:
+            pd.set_option('display.max_columns', max_columns)
+        if max_rows:
+            pd.set_option('display.max_rows', max_rows)
+        if all_columns:
+            pd.set_option('display.max_columns', None)
+        if all_rows:
+            pd.set_option('display.max_rows', None)
+        if precision:
+            pd.set_option('display.precision', precision)
         print(self)
+        pd.set_option('display.max_rows', original_max_rows)
+        pd.set_option('display.max_columns', original_max_columns)
+        pd.set_option('display.precision', original_display_precision)
 
     def make_dataset(self, train_frac: float = None,
-                     save_to: str = None,
                      random: bool = False,
                      random_seed: int = None):
         """
-        Create dataset function.
+        Create the separated datasets based on the original one.
         The proportion of the train data and hold-out data should be specified.
         :param train_frac: the proportion of train data
-        :param save_to: the path of dataset if you want to save it for other uses
         :param random: set True if random dataset is needed
         :param random_seed: the random seed of making dataset procession
+        :returns train_data, test_data
         """
         if random:
             train_data = self.sample(frac=train_frac, random_state=random_seed)
             test_data = self.drop(train_data.index)
-        else:
+            return OneData(train_data), OneData(test_data)
+        elif train_frac:
             index_num = int(self.shape[0] * train_frac)
             train_data = self.iloc[:index_num, :]
             test_data = self.iloc[index_num:, :]
-        if save_to:
-            train_data.to_csv(path_or_buf=save_to + './train_dataset.csv', index=False)
-            test_data.to_csv(path_or_buf=save_to + './test_dataset.csv', index=False)
-        return OneData(train_data), OneData(test_data)
+            return OneData(train_data), OneData(test_data)
+        else:
+            self._raise_parameter_error(["train_frac or random"])
 
-    def reverse(self, reset_index: bool = False, axis: str = 'row'):
+    def reverse(self, axis: str = 'row', reset_index: bool = False):
         """
-        Method for reversing the dataset
-        :param reset_index: true for reset the index of data frame
+        Method for reversing the dataset.
         :param axis: set 'row' if the order of the rows is to be reversed, and set 'column' if the order of the column
         is to be reversed
+        :param reset_index: true for reset the index of data frame
+        :param inplace: inplace modification if it sets True
+        :return OneData
         """
         if axis == 'row':
             if reset_index:
@@ -179,41 +238,75 @@ class OneData(DataFrame, ABC, Plot):
         Return a summary of the whole dataset.
         the stats from scipy is used to calculate the Entropy.
         :param info: stay True if a display of information is required
+        :return the detail of summary
         """
         from scipy import stats
 
         pd.set_option('display.max_columns', None)
         print(f"Dataset Shape: {self.shape}")
-        summ = pd.DataFrame(self.dtypes, columns=['dtypes'])
-        summ = summ.reset_index()
-        summ['Name'] = summ['index']
-        summ = summ[['Name', 'dtypes']]
-        summ['Missing'] = self.isnull().sum().values
-        summ['Uniques'] = self.nunique().values
-        summ['First Value'] = self.loc[self.index[0]].values
-        summ['Second Value'] = self.loc[self.index[1]].values
-        summ['Third Value'] = self.loc[self.index[2]].values
+        summary_info = pd.DataFrame(self.dtypes, columns=['dtypes'])
+        summary_info = summary_info.reset_index()
+        summary_info['Name'] = summary_info['index']
+        summary_info = summary_info[['Name', 'dtypes']]
+        summary_info['Missing'] = self.isnull().sum().values
+        summary_info['Uniques'] = self.nunique().values
+        summary_info['First Value'] = self.loc[self.index[0]].values
+        summary_info['Second Value'] = self.loc[self.index[1]].values
+        summary_info['Third Value'] = self.loc[self.index[2]].values
 
-        for name in summ['Name'].value_counts().index:
-            summ.loc[summ['Name'] == name, 'Entropy'] = round(
+        for name in summary_info['Name'].value_counts().index:
+            summary_info.loc[summary_info['Name'] == name, 'Entropy'] = round(
                 stats.entropy(self[name].value_counts(normalize=True), base=2), 2)
         if info:
-            print(summ)
-        return summ
+            print(summary_info)
+        return summary_info
 
-    def fill_na(self, method: str = 'mode'):
+    @doc(NDFrame.fillna, **_shared_doc_kwargs)
+    def fillna(
+            self,
+            value=None,
+            method=None,
+            axis=None,
+            inplace=False,
+            limit=None,
+            downcast=None,
+    ):
         """
-        Fill the NaN values.
+        Fill the NaN values, which is an extended function of original fillna().
         :param method: the way to fill the NaN values, which contains mode and nan methods
+        :param inplace: inplace modification
+        :param value: inherit
+        :param axis: inherit
+        :param limit: inherit
+        :param downcast: inherit
         """
-        data = self
         if method == 'mode':
-            for key, value in data.isnull().sum().items():
-                if value:
-                    data[key].fillna(self[key].mode()[0], inplace=True)
+            if inplace:
+                for key, value in self.isnull().sum().items():
+                    if value:
+                        self[key].fillna(self[key].mode()[0], inplace=True)
+            else:
+                data = self
+                for key, value in data.isnull().sum().items():
+                    if value:
+                        data[key].fillna(self[key].mode()[0], inplace=True)
+                return data
         elif method == 'nan':
-            data = data.fillna(np.nan)
-        return OneData(data)
+            if inplace:
+                self.fillna(np.nan, inplace=True)
+            else:
+                data = self
+                data = data.fillna(np.nan)
+                return data
+        else:
+            return super().fillna(
+                value=value,
+                method=method,
+                axis=axis,
+                inplace=inplace,
+                limit=limit,
+                downcast=downcast,
+            )
 
     def remove(self, column: list = None, row: list = None):
         """
@@ -222,8 +315,6 @@ class OneData(DataFrame, ABC, Plot):
         :param row: the list of row you want to remove
         """
         data = self
-        if column is None:
-            column = []
         if column:
             data = data.drop(column, axis=1)
         if row:
@@ -231,12 +322,26 @@ class OneData(DataFrame, ABC, Plot):
                 data = data.drop(n)
         return OneData(data)
 
-    def add_var(self, exist, new, mapper=None):
+    def gen_var(self, exist, new, mapper=None):
         """
-        Add a new variable based on the calculating of exist variable.
-        :param exist: the exist variable column
-        :param new: the new variable column
+        Generate a new variable based on the calculating of exist variable using map().
+        :param exist: the exist column of data
+        :param new: the name of new column
         :param mapper: the mapper applied to the exist variable
+        For example:
+        >>       0    1    2
+            0  1.0  2.0  3.0
+            1  1.0  2.0  2.0
+            2  1.0  2.0  2.0
+            3  8.0  8.0  2.0
+
+        >> data.add_var(0, 3, lambda x: x * 2)
+
+        >>       0    1    2     3
+            0  1.0  2.0  3.0   2.0
+            1  1.0  2.0  2.0   2.0
+            2  1.0  2.0  2.0   2.0
+            3  8.0  8.0  2.0  16.0
         """
         data = self
         if mapper:
@@ -245,20 +350,8 @@ class OneData(DataFrame, ABC, Plot):
             data[new] = data[exist]
         return data
 
-    def means(self, variable: str = None, hue: str = None):
-        """
-        An advanced method of mean, which can calculate means with hue
-        :param variable: the variable to calculate means
-        :param hue: the hue for calculation
-        """
-        if hue:
-            return self[[hue, variable]][self[variable].isnull() == False].groupby([hue],
-                                                                                   as_index=False).mean().sort_values(
-                by=variable, ascending=False)
-        elif variable:
-            return self.mean()[variable]
-        else:
-            return self.mean()
+    def mean(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        return OneSeries(NDFrame.mean(self, axis, skipna, level, numeric_only, **kwargs))
 
     def reduce_mem_usage(self, use_float16: bool = False, info: bool = True):
         """
@@ -302,27 +395,27 @@ class OneData(DataFrame, ABC, Plot):
             print("Memory usage after optimization is: {:.3f} MB".format(end_mem))
             print("Decreased by {:.1f}%".format(100 * (start_mem - end_mem) / start_mem))
 
-        return OneData(self)
-
     def iter(self, index=True, name="OneData"):
         """
-        Iteration methods for fast using
+        Iteration methods for fast using, the override of itertuples().
         :param index: If True, return the index as the first element of the tuple.
         :param name: The name of the returned named tuples or None to return regular.
         """
-        return self.itertuples(index=index, name=name)
+        arrays = []
+        fields = list(self.columns)
+        if index:
+            arrays.append(self.index)
+            fields.insert(0, "Index")
+        arrays.extend(self.iloc[:, k] for k in range(len(self.columns)))
 
-    def select_row(self, indices: dict, reset_index: bool = False):
-        """
-        Select raw with particular indices.
+        if name is not None:
+            itertuple = collections.namedtuple(name, fields, rename=True)
+            return map(itertuple._make, zip(*arrays))
 
-        For example:
-        a = a.select_raw({'Gender': 'Male'})  # it will returns the data that matched variable'Gender' == values'Male'
-        a = a.select_raw({'Gender': 'Male', 'Age': 20})  # it can also use for multiple matching
-        """
-        df = self
-        for variable, value in indices.items():
-            df = df[(df[variable] == value)]
-        if reset_index:
-            df = df.reset_index()
-        return OneData(df)
+        return zip(*arrays)
+
+    def r_append(self, other):
+        return OneData(pd.concat([self, other], axis=1))
+
+    def l_append(self, other):
+        return OneData(pd.concat([other, self], axis=1))

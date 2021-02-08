@@ -1,5 +1,6 @@
 import numpy as np
 import seaborn as sns
+import pandas as pd
 from pandas import Series
 from pandas import DataFrame
 import matplotlib.pyplot as plt
@@ -7,6 +8,7 @@ from scipy.interpolate import interp1d
 
 
 class OneSeries(Series):
+
     def __init__(self, data):
         super().__init__(data=data)
 
@@ -15,15 +17,27 @@ class OneSeries(Series):
         from .onedata import OneData
         return OneData
 
-    def add(self, other):
+    def r_append(self, other):
+        """
+        Append another OneSeries data to the right of this series and return a new OneData.
+        :param other: the other OneSeries
+        :return: OneData
+        """
         if isinstance(other, OneSeries):
             return self._one_data({self.name: self, other.name: other})
-        elif isinstance(other, self._one_data):
-            other.insert(loc=0, column=self.name, value=self)
-            return other
-        elif isinstance(other, DataFrame):
-            other.insert(loc=0, column=self.name, value=self)
-            return self._one_data(other)
+        elif isinstance(other, self._one_data) or isinstance(other, DataFrame):
+            return self._one_data(pd.concat([self, other], axis=1))
+
+    def l_append(self, other):
+        """
+        Append another OneSeries data to the left of this series and return a new OneData.
+        :param other: the other OneSeries
+        :return: OneData
+        """
+        if isinstance(other, OneSeries):
+            return self._one_data({other.name: other, self.name: self})
+        elif isinstance(other, self._one_data) or isinstance(other, DataFrame):
+            return self._one_data(pd.concat([other, self], axis=1))
 
     def summary(self, info: bool = True):
         """
@@ -86,6 +100,18 @@ class OneSeries(Series):
         else:
             return self.loc[::-1]
 
+    def shuffle(self, reset_index: bool = False, random_seed: int = None):
+        """
+        A non-inplace shuffle method.
+        :param reset_index: reset the index if it sets True
+        :param random_seed: the random seed of shuffle
+        :return: OneSeries
+        """
+        if reset_index:
+            return self.sample(frac=1, random_state=random_seed).reset_index(drop=True)
+        else:
+            return self.sample(frac=1, random_state=random_seed)
+
     def top(self, n: int = 1):
         """
         Return the top of the values.
@@ -108,7 +134,7 @@ class OneSeries(Series):
                    xlabel: str = None,
                    ylabel: str = None):
         """
-        Generate the count graph.
+        A fast-using generator of the count graph.
         """
         sns.set()
         plt.title(title)
@@ -128,7 +154,7 @@ class OneSeries(Series):
                   insert_num: int = 50,
                   show: bool = True):
         """
-        It's a fast plot function to generate graph rapidly.
+        A fast-using generator of the line graph.
         """
         sns.set()
         if figsize:
