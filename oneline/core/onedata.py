@@ -322,7 +322,7 @@ class OneData(DataFrame, ABC, Plot):
                 data = data.drop(n)
         return OneData(data)
 
-    def gen_var(self, exist, new, mapper=None):
+    def add_var(self, exist, new, mapper=None):
         """
         Generate a new variable based on the calculating of exist variable using map().
         :param exist: the exist column of data
