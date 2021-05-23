@@ -6,8 +6,10 @@ from pandas import DataFrame
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
+from .plot import Plot
 
-class OneSeries(Series):
+
+class OneSeries(Series, Plot):
 
     def __init__(self, data):
         super().__init__(data=data)
@@ -126,57 +128,76 @@ class OneSeries(Series):
         """
         return self.value_counts().nsmallest(n=n)
 
-    # ========================= Plot ========================= #
-
-    def count_plot(self,
-                   figsize: list = None,
-                   title: str = None,
-                   xlabel: str = None,
-                   ylabel: str = None):
-        """
-        A fast-using generator of the count graph.
-        """
-        sns.set()
-        plt.title(title)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        if figsize:
-            plt.figure(figsize=figsize)
-        sns.countplot(x=self)
-        plt.show()
-
-    def line_plot(self,
-                  figsize: list = None,
-                  title: str = None,
-                  xlabel: str = None,
-                  ylabel: str = None,
-                  smooth: bool = False,
-                  insert_num: int = 50,
-                  show: bool = True):
-        """
-        A fast-using generator of the line graph.
-        """
-        sns.set()
-        if figsize:
-            plt.figure(figsize=figsize)
-        plt.title(title)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-
-        x_val = list(range(len(self)))
-
-        if smooth:
-            x_new = np.linspace(min(x_val), max(x_val), len(x_val) * insert_num)
-            y_smooth = interp1d(x_val, self, kind='cubic')
-            plt.plot(y_smooth(x_new), x_new)
-        else:
-            plt.plot(x_val, self)
-        if show:
-            plt.show()
-
     def to_frame(self, name=None):
         if name is None:
             df = self._onedata(self)
         else:
             df = self._onedata({name: self})
         return df
+
+    # ========================= Plot ========================= #
+
+    def count_plot(self,
+                   inherit: plt = None,
+                   figsize: list = None,
+                   title: str = None,
+                   xlabel: str = None,
+                   ylabel: str = None,
+                   show: bool = True):
+        """
+        Generate the count graph
+
+        :param inherit: the inherit plt
+        :param figsize: The size of figure.
+        :param title: the title of plot
+        :param xlabel: label of x
+        :param ylabel: label of y
+        :param show: plt.show will run if true
+        """
+
+        # previous configuration of plot
+        plt = self._plot_prev_config(inherit, figsize, "seaborn-darkgrid")
+
+        count_base_data = self.value_counts()
+        plt.bar(list(count_base_data.keys()), list(count_base_data))
+
+        # return for advanced adjustment
+        return self._plot_post_config(plt, '', title, xlabel, ylabel, show)
+
+    def line_plot(self,
+                  inherit: plt = None,
+                  figsize: list = None,
+                  title: str = None,
+                  xlabel: str = None,
+                  ylabel: str = None,
+                  smooth: bool = False,
+                  kind: str = 'cubic',
+                  interval: int = 50,
+                  legend_loc: str = 'upper left',
+                  show: bool = True):
+        """
+        It's a fast plot function to generate graph rapidly.
+
+        :param inherit: the inherit plt
+        :param figsize: The size of figure.
+        :param title: the title of plot
+        :param xlabel: label of x
+        :param ylabel: label of y
+        :param smooth: Set it True if the curve smoothing needed.
+        :param kind: The method for smooth.
+        :param interval: define the number for smooth function.
+        :param legend_loc: The location of the legend in plot.
+        :param show: plt.show will run if true
+        """
+
+        # previous configuration of plot
+        plt = self._plot_prev_config(inherit, figsize, "seaborn-darkgrid")
+
+        # data x pre-configuration process
+        x = list(self.index)
+
+        # data y pre-configuration process
+        plt = self._meta_line_plot(plt, self, x, smooth, kind, interval, None)
+
+        # return for advanced adjustment
+        return self._plot_post_config(plt, legend_loc, title, xlabel, ylabel, show)
