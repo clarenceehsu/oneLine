@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import PolynomialFeatures
 
 
-class MachineLearning:
+class MachineLearning(object):
     """
     That's the machine learning module for analysis using, and it's based on the scikit-learn module, which contains
     10 necessary ML methods.

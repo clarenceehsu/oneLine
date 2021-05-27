@@ -1,9 +1,14 @@
 ## CHANGELOG
 
+### 2021.05.27
+
+- Add some useful features to `NeuralNetwork()`.
+- Bug fixes.
+
 ### 2021.05.23
 
 - Remove `seaborn` from requirements.
-- Add a fast training tools `NeuralNetwork()` based on Pytorch
+- Add a fast training tools `NeuralNetwork()` based on Pytorch.
 - Structure optimized.
 
 ### 2021.04.27
@@ -14,7 +19,7 @@
 ### 2021.02.08
 
 - Minor bug fixes.
-- Reconfigure some functions of OneData and OneSeries for more convinient usings
+- Reconfigure some functions of OneData and OneSeries for more convinient usings.
 
 ### 2021.01.23
 
