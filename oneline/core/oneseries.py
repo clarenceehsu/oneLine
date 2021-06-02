@@ -1,10 +1,14 @@
-import numpy as np
-import seaborn as sns
+"""
+OneSeries is an extended variant of pandas.Seres, which also inherits all the pandas.Series
+features and ready to use. It contains many useful methods for a better experience on data analysis.
+
+WARNING: Because this module is still pre-alpha, so many features are unstable.
+"""
+
 import pandas as pd
 from pandas import Series
 from pandas import DataFrame
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
 
 from .plot import Plot
 
@@ -12,6 +16,10 @@ from .plot import Plot
 class OneSeries(Series, Plot):
 
     def __init__(self, data):
+        """
+        Inherit from pandas.Series.
+        :param data: the import data
+        """
         super().__init__(data=data)
 
     @property
@@ -129,11 +137,15 @@ class OneSeries(Series, Plot):
         return self.value_counts().nsmallest(n=n)
 
     def to_frame(self, name=None):
+        """
+        Convert Series to OneData
+        :param name: the name of series
+        :return: oneline.OneData
+        """
         if name is None:
-            df = self._onedata(self)
+            return self._onedata(self)
         else:
-            df = self._onedata({name: self})
-        return df
+            return self._onedata({name: self})
 
     # ========================= Plot ========================= #
 
@@ -145,7 +157,7 @@ class OneSeries(Series, Plot):
                    ylabel: str = None,
                    show: bool = True):
         """
-        Generate the count graph
+        Generate the count graph based on the data.
 
         :param inherit: the inherit plt
         :param figsize: The size of figure.
@@ -176,7 +188,7 @@ class OneSeries(Series, Plot):
                   legend_loc: str = 'upper left',
                   show: bool = True):
         """
-        It's a fast plot function to generate graph rapidly.
+        It's a fast plot function to generate line_plot graph rapidly.
 
         :param inherit: the inherit plt
         :param figsize: The size of figure.

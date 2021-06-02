@@ -1,25 +1,37 @@
+"""
+OneData is an extended DataFrame based on pandas.DataFrame, which also inherits all the pandas.DataFrame
+features and ready to use. It contains many useful methods for a better experience on data analysis.
+
+WARNING: Because this module is still pre-alpha, so many features are unstable.
+"""
+
 import collections
 import numpy as np
 from abc import ABC
-import pandas as pd
-from pandas import DataFrame
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-from pandas.api.types import is_categorical_dtype
-from pandas.api.types import is_datetime64_any_dtype as is_datetime
+
+# pandas
+import pandas as pd
+from pandas import DataFrame
 from pandas._libs import lib
 from pandas.util._decorators import doc
+from pandas.api.types import is_categorical_dtype
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
+
+# pandas.core
+from pandas.core import common as com
+from pandas.core.generic import NDFrame
 from pandas.core.dtypes.common import (
     is_hashable,
     is_integer,
     is_iterator,
     is_list_like,
 )
-from pandas.core.generic import NDFrame
 from pandas.core.dtypes.generic import ABCMultiIndex
-from pandas.core import common as com
 from pandas.core.indexing import convert_to_index_sliceable
 
+# oneline module
 from .plot import Plot
 from .oneseries import OneSeries
 

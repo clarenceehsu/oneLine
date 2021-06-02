@@ -1,10 +1,17 @@
+"""
+The IO module supplies some basic IO methods with a more comprehensive auto detection. It's easy to use
+without learning cost.
+
+This module are based on the Python standard library shutil.
+"""
+
+import os
 import json
 import shutil
-import os
 from os.path import isfile, isdir, exists
 
 
-class io:
+class IO(object):
     @staticmethod
     def ignore(*ignorance):
         """
@@ -28,7 +35,7 @@ class io:
         elif isfile(source):
             shutil.copy(source, to, follow_symlinks=follow_symlinks)
         else:
-            raise TypeError(f"The file { source } is not exist.")
+            raise TypeError(f"The file or directory *{ source }* is not exist.")
 
     @staticmethod
     def delete(source):
@@ -50,7 +57,7 @@ class io:
         Create a new directory.
         """
         if exists(path):
-            raise AttributeError(f"The path { path } is exist.")
+            raise AttributeError(f"The path *{ path }* is exist.")
         else:
             os.mkdir(path)
 

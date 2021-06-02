@@ -1,9 +1,7 @@
 from os.path import join
-import torch
-from torch import nn
-import torch.nn.init as init
 
 from .average_meter import AverageMeter
+from ..tools.compat import import_optional_dependency
 
 
 class NeuralNetwork(object):
@@ -12,22 +10,32 @@ class NeuralNetwork(object):
     the dataset, optimizer and other parameters declared.
     """
 
+    def _raise_format_error(self, name: str, format_str: str, source_format: str):
+        """
+        The exception of ValueError when format was unsupported.
+        :return: ValueError
+        """
+        raise ValueError(f"The '{ name }' should be { format_str }, rather than { source_format }")
+
     def __init__(self,
-                 model: torch.nn.Module = None,
-                 train_dataset: torch.utils.data.DataLoader = None,
-                 eval_dataset: torch.utils.data.DataLoader = None,
-                 optimizer: torch.optim.Optimizer = None,
+                 model=None,
+                 train_dataset=None,
+                 eval_dataset=None,
+                 optimizer=None,
                  criterion=None,
                  cpu: bool = False):
         """
         Initialize the Neural Network training process.
         :param model: the torch.nn.Module
         :param train_dataset: the DataLoader() dataset for training
-        :param test_dataset: the DataLoader() dataset for testing
+        :param eval_dataset: the DataLoader() dataset for testing
         :param optimizer: the torch optimizer
         :param criterion: the torch criterion
         :param cpu: set True if forced to use CPU, else it would be set automatically
         """
+        # import torch for initialization
+        torch = import_optional_dependency("torch")
+
         # ============== basic parameters ============== #
         # the device that used to train models, which can automatically set
         self.device = torch.device("cuda" if torch.cuda.is_available() and not cpu else "cpu")
@@ -51,16 +59,28 @@ class NeuralNetwork(object):
         self.epoch = 0
 
     def _set_train(self):
+        """
+        A sub-function that ensuring the train mode
+        :return: None
+        """
         if not self.model.__dict__['training']:
             self.model.train()
 
+    def _set_eval(self):
+        """
+        A sub-function that ensuring the eval mode
+        :return: None
+        """
+        if self.model.__dict__['training']:
+            self.model.eval()
+
     def _train_net(self):
         """
-        The train iterator that executes a standard training flow and yields per epoch.
+        The train iterator that executes a standard training flow per epoch.
         :return: None
         """
         # model initialize
-        self.model.train()
+        self._set_train()
 
         # start epoch
         for i, (source, target) in enumerate(self.train_dataset):
@@ -91,18 +111,17 @@ class NeuralNetwork(object):
         self.epoch_loss.reset()
         self.epoch += 1
 
-    @torch.no_grad()
     def _eval_net(self):
         """
         The evaluation flow using test_dataset without grad.
         :return: The total loss during evaluation and model's accuracy
         """
         # parameters initialize
+        torch = import_optional_dependency("torch")
         eval_total = 0
         eval_correct = 0
         eval_loss = 0
-        if self.model.__dict__['training']:
-            self.model.eval()
+        self._set_eval()
 
         # display the information
         if self.info:
@@ -130,6 +149,13 @@ class NeuralNetwork(object):
 
     @staticmethod
     def _reset_weight(m):
+        """
+        A sub-function with a general weights initialization.
+        :param m: the layers of self.model
+        :return: None
+        """
+        nn = import_optional_dependency("torch.nn")
+        init = import_optional_dependency("torch.nn.init")
         if isinstance(m, nn.Conv1d):
             init.normal_(m.weight.data)
             if m.bias is not None:
@@ -155,9 +181,6 @@ class NeuralNetwork(object):
             if m.bias is not None:
                 init.normal_(m.bias.data)
         elif isinstance(m, nn.BatchNorm1d):
-            init.normal_(m.weight.data, mean=1, std=0.02)
-            init.constant_(m.bias.data, 0)
-        elif isinstance(m, nn.BatchNorm2d):
             init.normal_(m.weight.data, mean=1, std=0.02)
             init.constant_(m.bias.data, 0)
         elif isinstance(m, nn.BatchNorm3d):
@@ -217,7 +240,8 @@ class NeuralNetwork(object):
                    info: bool = True,
                    save_static_dicts: bool = True):
         """
-        A auto training method for fast using.
+        A auto training method for fast using. And the epoch and the location for saving models should be
+        specified while using auto_train().
         :param epoch: teh epoch of training
         :param save_model_location: the location for storing the model
         :param eval: eval the model or not
@@ -263,12 +287,44 @@ class NeuralNetwork(object):
         self._eval_net()
 
     def reset_train(self):
+        """
+        Reset the process of training, which includes the loss meter reset, epoch reset and model's weights
+        reset.
+        :return: None
+        """
         self.model.apply(self._reset_weight)
         self.epoch_loss.reset()
         self.epoch = 0
 
     def save_state_dict(self, location: str):
+        """
+        Save only the state dict of the model.
+        :param location: the location of models
+        :return: None
+        """
+        torch = import_optional_dependency("torch")
         torch.save(self.model.state_dict(), location)
 
     def save_model(self, location: str):
+        """
+        Save only the whole model.
+        :param location: the location of models
+        :return: None
+        """
+        torch = import_optional_dependency("torch")
         torch.save(self.model, location)
+
+    def check_parameters(self):
+        """
+        A method for checking the parameters before training, in order to process the training correctly.
+        :return: None
+        """
+        torch = import_optional_dependency('torch')
+        if not isinstance(self.model, torch.nn.Module):
+            self._raise_format_error('self.model', 'torch.nn.Module', f'{ type(self.model) }')
+        if not isinstance(self.optimizer, torch.optim.Optimizer):
+            self._raise_format_error('self.optimizer', 'torch.optim.Optimizer', f'{ type(self.optimizer) }')
+        if not isinstance(self.train_dataset, torch.utils.data.DataLoader):
+            self._raise_format_error('self.train_dataset', 'torch.utils.data.DataLoader', f'{ type(self.train_dataset) }')
+        if not isinstance(self.eval_dataset, torch.utils.data.DataLoader):
+            self._raise_format_error('self.eval_dataset', 'torch.utils.data.DataLoader', f'{ type(self.eval_dataset) }')

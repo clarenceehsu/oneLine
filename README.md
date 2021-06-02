@@ -1,10 +1,10 @@
 # oneLine
 
- Make every step oneLine. 
+Make every step oneLine. 
 
 ## What is it?
 
-It's a personal code set for learning and researching, and it provides advanced encapsulation of some libraries, designing to provide a simpler mode of operation and help people to simplify their codes concisely.
+It's a personal code set for learning and researching on Data Science and Machine Learning. It contains advanced encapsulation of some libraries, designing to provide a simpler mode of operation and help people to simplify their codes concisely.
 
 > This library is a collection of code used for learning and analysis, and the content is not perfect for the time being.
 
@@ -21,11 +21,11 @@ pip install one-line
 Import module and dataset:
 
 ```python
+# import OneData, an extended DataFrame
 from oneline import OneData
-# this how we measure data in oneLine. OneData is an extension class of DataFrame.
 
+# input the data with address, and the format will be set automatically
 data = OneData('test.csv')
-# input the data
 ```
 
 You can also import data using Pandas:
@@ -36,21 +36,8 @@ from oneline import OneData
 
 temp = pd.read_csv('test.csv')
 
-data = OneData(temp)
 # a DataFrame type data is also acceptable
-
+data = OneData(temp)
 ```
 
-Some example:
-
-```python
-data = data.fill_na()
-# fill the NaN values
-
-summary = data.summary(info=False)
-# simple summary of data, which will print the summary if info is True
-
-data.means('parameter1', hue='parameter2')
-# calculate the means, which can have a hue variable applied
-```
-
+More example see also `test/test_EDA.py`.
