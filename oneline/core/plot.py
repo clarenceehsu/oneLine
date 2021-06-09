@@ -4,30 +4,13 @@ The plot function of oneline. It contains a series of plot methods for a fast pl
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
+from ..tools.compat import import_optional_dependency
 
 
-class Plot:
+class Plot(object):
     """
     This is a plot module for data visualization.
     """
-
-    def _raise_plot_value_error(self, s: list):
-        """
-        A ValueError would be raised if required value was missed.
-        :param s: the missing value(s)
-        :return: None
-        """
-        raise ValueError(f'The parameter { ", ".join(s) } {"is" if len(s) == 1 else "are"} required.')
-
-    def _raise_plot_format_error(self, s: list, format: str):
-        """
-        A ValueError of format would be raised if the format was not matched.
-        :param s: the wrong parameters
-        :param format: the required format
-        :return: None
-        """
-        raise ValueError(f'The parameter { ", ".join(s) } should be { format }, rather than { ", ".join([str(type(n)) for n in s]) }.')
 
     @property
     def _plt(self):
@@ -39,10 +22,11 @@ class Plot:
                           style: str = None):
         """
         A general pre-configuration of plot process.
+
         :param inherit: the outscope configuration of plot
         :param figsize: the size of figuration
         :param style: the style of plot
-        :return:
+        :return: plt
         """
 
         # inherit previous plt configuration if exists
@@ -67,6 +51,7 @@ class Plot:
                           show: bool):
         """
         The post-configuration of plot process.
+
         :param plt: the plt
         :param legend_loc: the position of legend
         :param title: the title
@@ -75,6 +60,7 @@ class Plot:
         :param show: show the plot if True
         :return: plt
         """
+
         # Other post configuration
         if legend_loc:
             plt.legend(loc=legend_loc)
@@ -96,6 +82,7 @@ class Plot:
     def _meta_line_plot(plt, y_val, x, smooth, kind, interval, name):
         """
         A meta function of line_plot.
+
         :param plt: the inherit plt
         :param y_val: y value
         :param x: x value
@@ -105,9 +92,11 @@ class Plot:
         :param name: the name of line
         :return: plt
         """
+
         if smooth:
+            interpolate = import_optional_dependency("scipy.interpolate")
             x_new = np.linspace(min(x), max(x), len(x) * interval)
-            y_smooth = interp1d(x, y_val, kind=kind)
+            y_smooth = interpolate.interp1d(x, y_val, kind=kind)
             plt.plot(x_new, y_smooth(x_new), label=name)
         else:
             plt.plot(x, y_val, label=name)

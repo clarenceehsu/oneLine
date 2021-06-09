@@ -10,5 +10,4 @@ learning, which contains:
 
 from .average_meter import AverageMeter
 from .neural_network import NeuralNetwork
-import machine_learning as MachineLearning
-from .machine_learning import MachineLearningModel
+from .machine_learning import *

@@ -10,7 +10,9 @@ from pandas import Series
 from pandas import DataFrame
 import matplotlib.pyplot as plt
 
+# oneline module
 from .plot import Plot
+from ..tools.compat import import_optional_dependency
 
 
 class OneSeries(Series, Plot):
@@ -18,8 +20,10 @@ class OneSeries(Series, Plot):
     def __init__(self, data):
         """
         Inherit from pandas.Series.
+
         :param data: the import data
         """
+
         super().__init__(data=data)
 
     @property
@@ -30,9 +34,11 @@ class OneSeries(Series, Plot):
     def r_append(self, other):
         """
         Append another OneSeries data to the right of this series and return a new OneData.
+
         :param other: the other OneSeries
         :return: OneData
         """
+
         if isinstance(other, OneSeries):
             return self._one_data({self.name: self, other.name: other})
         elif isinstance(other, self._one_data) or isinstance(other, DataFrame):
@@ -41,9 +47,11 @@ class OneSeries(Series, Plot):
     def l_append(self, other):
         """
         Append another OneSeries data to the left of this series and return a new OneData.
+
         :param other: the other OneSeries
         :return: OneData
         """
+
         if isinstance(other, OneSeries):
             return self._one_data({other.name: other, self.name: self})
         elif isinstance(other, self._one_data) or isinstance(other, DataFrame):
@@ -53,9 +61,12 @@ class OneSeries(Series, Plot):
         """
         Return a summary of the whole OneSeries dataset.
         the stats from scipy is used to calculate the Entropy.
+
         :param info: stay True if a display of information is required
         """
-        from scipy import stats
+
+        # Add Entropy if scipy is installed
+        stats = import_optional_dependency("scipy.stats")
 
         sum_info = {}
         length = self.shape[0]
@@ -69,8 +80,9 @@ class OneSeries(Series, Plot):
             sum_info['Maximum'] = self.max()
             sum_info['Zeros'] = (self == 0).sum()
             sum_info['Zeros(%)'] = sum_info['Zeros'] / length
-            sum_info['Entropy'] = round(
-                stats.entropy(self.value_counts(normalize=True), base=2), 2)
+            if stats:
+                sum_info['Entropy'] = round(
+                    stats.entropy(self.value_counts(normalize=True), base=2), 2)
             sum_info['Memory Size(KB)'] = self.memory_usage() / 1024
 
             if info:
@@ -80,7 +92,8 @@ class OneSeries(Series, Plot):
                 print('Means: {:.2f}'.format(sum_info['Means']))
                 print('Minimum: {}'.format(sum_info['Minimum']))
                 print('Maximum: {}'.format(sum_info['Maximum']))
-                print('Entropy: {}'.format(sum_info['Entropy']))
+                if stats:
+                    print('Entropy: {}'.format(sum_info['Entropy']))
                 print('Memory Size: {:.1f}KB'.format(sum_info['Memory Size(KB)']))
 
         elif str(self.dtype) == "object":
@@ -88,23 +101,27 @@ class OneSeries(Series, Plot):
             sum_info['Unique(%)'] = sum_info['Unique'] / length
             sum_info['Missing'] = self.isnull().sum()
             sum_info['Missing(%)'] = sum_info['Missing'] / length
-            sum_info['Entropy'] = round(
-                stats.entropy(self.value_counts(normalize=True), base=2), 2)
+            if stats:
+                sum_info['Entropy'] = round(
+                    stats.entropy(self.value_counts(normalize=True), base=2), 2)
             sum_info['Memory Size(KB)'] = self.memory_usage() / 1024
 
             if info:
                 print('Unique: {}({:.2f}%)'.format(sum_info['Unique'], sum_info['Unique(%)'] * 100))
                 print('Missing: {}({:.2f}%)'.format(sum_info['Missing'], sum_info['Missing(%)'] * 100))
-                print('Entropy: {}'.format(sum_info['Entropy']))
+                if stats:
+                    print('Entropy: {}'.format(sum_info['Entropy']))
                 print('Memory Size: {:.2f}KB'.format(sum_info['Memory Size(KB)']))
 
         return self._one_data(sum_info, index=[0])
 
     def reverse(self, reset_index: bool = False):
         """
-        Method for reversing the dataset
+        Method for reversing the dataset.
+
         :param reset_index: true for reset the index of series
         """
+
         if reset_index:
             return self.loc[::-1].reset_index(drop=True)
         else:
@@ -113,10 +130,12 @@ class OneSeries(Series, Plot):
     def shuffle(self, reset_index: bool = False, random_seed: int = None):
         """
         A non-inplace shuffle method.
+
         :param reset_index: reset the index if it sets True
         :param random_seed: the random seed of shuffle
         :return: OneSeries
         """
+
         if reset_index:
             return self.sample(frac=1, random_state=random_seed).reset_index(drop=True)
         else:
@@ -125,23 +144,29 @@ class OneSeries(Series, Plot):
     def top(self, n: int = 1):
         """
         Return the top of the values.
+
         :param n: the number of value to return
         """
+
         return self.value_counts().nlargest(n=n)
 
     def bottom(self, n: int = 1):
         """
-        Return the bottom of the values
+        Return the bottom of the values.
+
         :param n: the number of value to return
         """
+
         return self.value_counts().nsmallest(n=n)
 
     def to_frame(self, name=None):
         """
-        Convert Series to OneData
+        Convert Series to OneData.
+
         :param name: the name of series
         :return: oneline.OneData
         """
+
         if name is None:
             return self._onedata(self)
         else:

@@ -14,5 +14,21 @@ from .core import *
 from .machinelearning import *
 
 # Information
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 __author__ = 'Zeesain Tsui'
+
+# check the essential dependencies
+hard_dependencies = ("numpy", "pandas", "matplotlib")
+missing_dependencies = []
+
+for dependency in hard_dependencies:
+    try:
+        __import__(dependency)
+    except ImportError as e:
+        missing_dependencies.append(f"{dependency}: {e}")
+
+if missing_dependencies:
+    raise ImportError(
+        "Unable to import required dependencies:\n" + "\n".join(missing_dependencies)
+    )
+del hard_dependencies, dependency, missing_dependencies

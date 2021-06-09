@@ -13,8 +13,10 @@ class NeuralNetwork(object):
     def _raise_format_error(self, name: str, format_str: str, source_format: str):
         """
         The exception of ValueError when format was unsupported.
+
         :return: ValueError
         """
+
         raise ValueError(f"The '{ name }' should be { format_str }, rather than { source_format }")
 
     def __init__(self,
@@ -26,6 +28,7 @@ class NeuralNetwork(object):
                  cpu: bool = False):
         """
         Initialize the Neural Network training process.
+
         :param model: the torch.nn.Module
         :param train_dataset: the DataLoader() dataset for training
         :param eval_dataset: the DataLoader() dataset for testing
@@ -33,6 +36,7 @@ class NeuralNetwork(object):
         :param criterion: the torch criterion
         :param cpu: set True if forced to use CPU, else it would be set automatically
         """
+
         # import torch for initialization
         torch = import_optional_dependency("torch")
 
@@ -57,28 +61,37 @@ class NeuralNetwork(object):
         self.epoch_loss = AverageMeter()
         # the counter for training
         self.epoch = 0
+        # training process for iteration
+        self.batch_process = None
 
     def _set_train(self):
         """
-        A sub-function that ensuring the train mode
+        A sub-function that ensuring the train mode.
+
         :return: None
         """
+
         if not self.model.__dict__['training']:
             self.model.train()
 
     def _set_eval(self):
         """
-        A sub-function that ensuring the eval mode
+        A sub-function that ensuring the eval mode.
+
         :return: None
         """
+
         if self.model.__dict__['training']:
             self.model.eval()
 
-    def _train_net(self):
+    def _train_net(self, iter_batch: bool = False):
         """
         The train iterator that executes a standard training flow per epoch.
-        :return: None
+
+        :param iter_batch:
+        :return:
         """
+
         # model initialize
         self._set_train()
 
@@ -104,6 +117,10 @@ class NeuralNetwork(object):
             if self.info:
                 print(f"\rEpoch: { self.epoch } | Batch: { i } | loss: { self.epoch_loss.avg }", end="")
 
+            # yield if iter_batch is True
+            if iter_batch:
+                yield result
+
         if self.info:
             print(f"\rEpoch: { self.epoch } | Average loss: { self.epoch_loss.avg }")
 
@@ -114,8 +131,10 @@ class NeuralNetwork(object):
     def _eval_net(self):
         """
         The evaluation flow using test_dataset without grad.
+
         :return: The total loss during evaluation and model's accuracy
         """
+
         # parameters initialize
         torch = import_optional_dependency("torch")
         eval_total = 0
@@ -151,9 +170,11 @@ class NeuralNetwork(object):
     def _reset_weight(m):
         """
         A sub-function with a general weights initialization.
+
         :param m: the layers of self.model
         :return: None
         """
+
         nn = import_optional_dependency("torch.nn")
         init = import_optional_dependency("torch.nn.init")
         if isinstance(m, nn.Conv1d):
@@ -181,6 +202,9 @@ class NeuralNetwork(object):
             if m.bias is not None:
                 init.normal_(m.bias.data)
         elif isinstance(m, nn.BatchNorm1d):
+            init.normal_(m.weight.data, mean=1, std=0.02)
+            init.constant_(m.bias.data, 0)
+        elif isinstance(m, nn.BatchNorm2d):
             init.normal_(m.weight.data, mean=1, std=0.02)
             init.constant_(m.bias.data, 0)
         elif isinstance(m, nn.BatchNorm3d):
@@ -217,8 +241,10 @@ class NeuralNetwork(object):
     def __repr__(self):
         """
         Show the information of training.
+
         :return: None
         """
+
         # info string
         info = self.model.__repr__()
         info += "\n=========================\n"
@@ -242,6 +268,7 @@ class NeuralNetwork(object):
         """
         A auto training method for fast using. And the epoch and the location for saving models should be
         specified while using auto_train().
+
         :param epoch: teh epoch of training
         :param save_model_location: the location for storing the model
         :param eval: eval the model or not
@@ -250,6 +277,7 @@ class NeuralNetwork(object):
         :param save_static_dicts: set True if only save the static dicts
         :return: None
         """
+
         # initialize
         self.info = info
         best_attempt = float("-inf")
@@ -270,55 +298,81 @@ class NeuralNetwork(object):
                     else:
                         self.save_model(join(save_model_location, 'model.pkl'))
 
-    def iter_train(self):
+    def iter_epoch(self):
         """
         An iterator that training per epoch and return for advanced calculation, plot, etc.
+
         :return: None
         """
+
         # set to train mode
         self._set_train()
         self._train_net()
 
+    def iter_batch(self):
+        """
+        An iterator that training per batch and return for advanced calculation, plot, etc.
+
+        :return: output
+        """
+
+        if not self.batch_process:
+            self.batch_process = self._train_net(iter_batch=True)
+            return self.batch_process.__next__()
+        else:
+            return self.batch_process.__next__()
+
     def eval(self):
         """
         The evaluation function.
+
         :return: None
         """
+
         self._eval_net()
 
     def reset_train(self):
         """
         Reset the process of training, which includes the loss meter reset, epoch reset and model's weights
         reset.
+
         :return: None
         """
+
         self.model.apply(self._reset_weight)
         self.epoch_loss.reset()
         self.epoch = 0
+        self.batch_process = None
 
     def save_state_dict(self, location: str):
         """
         Save only the state dict of the model.
+
         :param location: the location of models
         :return: None
         """
+
         torch = import_optional_dependency("torch")
         torch.save(self.model.state_dict(), location)
 
     def save_model(self, location: str):
         """
         Save only the whole model.
+
         :param location: the location of models
         :return: None
         """
+
         torch = import_optional_dependency("torch")
         torch.save(self.model, location)
 
     def check_parameters(self):
         """
         A method for checking the parameters before training, in order to process the training correctly.
+
         :return: None
         """
+
         torch = import_optional_dependency('torch')
         if not isinstance(self.model, torch.nn.Module):
             self._raise_format_error('self.model', 'torch.nn.Module', f'{ type(self.model) }')

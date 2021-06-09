@@ -2,6 +2,7 @@
 A wrapper for classical machine learning based on sci-kit learn. Because this simple wrapper is not
 necessary, so this module would be deleted in the future.
 """
+
 from ..tools.compat import import_optional_dependency
 
 
@@ -18,15 +19,18 @@ class MachineLearningModel(object):
 
     def predict(self, x_test: list):
         """
-        Predict method for prediction
+        Predict method for prediction.
+
         :param x_test: the data for prediction
         """
+
         return self.model.predict(x_test)
 
 
 def linear_regression(x, y, degree: int = 1, include_bias: bool = False, info: bool = False):
     """
-    Linear Regression Method
+    Linear Regression Method.
+
     :param x: the x
     :param y: the y
     :param degree: the degree
@@ -34,6 +38,7 @@ def linear_regression(x, y, degree: int = 1, include_bias: bool = False, info: b
     :param info: show the info and parameters of the model
     :return: model
     """
+
     # set the degree
     if degree > 1:
         pf = import_optional_dependency("sklearn.preprocessing")\
@@ -48,12 +53,14 @@ def linear_regression(x, y, degree: int = 1, include_bias: bool = False, info: b
 
 def logistic_regression(x, y, info: bool = False):
     """
-    Logistic Regression Method
+    Logistic Regression Method.
+
     :param x: the x
     :param y: the y
     :param info: show the info and parameters of the model
     :return: model
     """
+
     # fit the model
     model = MachineLearningModel(import_optional_dependency("sklearn.linear_model").LogisticRegression())
     model.fit_model(x, y, info)
@@ -62,12 +69,14 @@ def logistic_regression(x, y, info: bool = False):
 
 def decision_tree(x, y, criterion: str = "gini"):
     """
-    Decision Tree Method
+    Decision Tree Method.
+
     :param x: the x
     :param y: the y
     :param criterion: the criterion method
     :return: model
     """
+
     # fit the model
     model = MachineLearningModel(
         import_optional_dependency("sklearn.tree").DecisionTreeClassifier(criterion=criterion))
@@ -77,13 +86,15 @@ def decision_tree(x, y, criterion: str = "gini"):
 
 def svm(x, y, C: float = 1.0, kernel: str = 'rbf'):
     """
-    Support Vector Machine Method
+    Support Vector Machine Method.
+
     :param x: the x
     :param y: the y
     :param C: the Regularization parameter
     :param kernel: Specifies the kernel type to be used in the algorithm
     :return: model
     """
+
     # fit the model
     model = MachineLearningModel(import_optional_dependency("sklearn.svm").SVC(C=C, kernel=kernel))
     model.fit_model(x, y, info=False)
@@ -92,11 +103,13 @@ def svm(x, y, C: float = 1.0, kernel: str = 'rbf'):
 
 def naive_bayes(x, y):
     """
-    Naive Bayes Method
+    Naive Bayes Method.
+
     :param x: the x
     :param y: the y
     :return: model
     """
+
     # fit the model
     model = MachineLearningModel(import_optional_dependency("sklearn.naive_bayes").GaussianNB())
     model.model.fit(x, y)
@@ -105,12 +118,14 @@ def naive_bayes(x, y):
 
 def knn(x, y, n_neighbors=6):
     """
-    KNN methods
+    KNN methods.
+
     :param x: the x
     :param y: the y
     :param n_neighbors: the number of n-neighbors
     :return: model
     """
+
     # fit the model
     model = MachineLearningModel(
         import_optional_dependency("sklearn.neighbors").KNeighborsClassifier(n_neighbors=n_neighbors))
@@ -120,12 +135,14 @@ def knn(x, y, n_neighbors=6):
 
 def kmeans(x, n_clusters=6, random_state=0):
     """
-    K-Means Method
+    K-Means Method.
+
     :param x: the x
     :param n_clusters: the number of clusters
     :param random_state: the number of random state
     :return: model
     """
+
     # fit the model
     model = MachineLearningModel(
         import_optional_dependency("sklearn.cluster").KMeans(n_clusters=n_clusters, random_state=random_state))
@@ -135,11 +152,13 @@ def kmeans(x, n_clusters=6, random_state=0):
 
 def random_forest(x, y):
     """
-    Random Forest Method
+    Random Forest Method.
+
     :param x: the x
     :param y: the y
     :return: model
     """
+
     model = MachineLearningModel(import_optional_dependency("sklearn.ensemble").RandomForestClassifier())
     model.model.fit(x, y)
     return model

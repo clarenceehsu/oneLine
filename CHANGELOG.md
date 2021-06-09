@@ -1,5 +1,12 @@
 ## CHANGELOG
 
+### 0.2.5 Update
+
+- Add `NeuralNetwork.iter_epoch()` and `NeuralNetwork.iter_batch()` for advanced using.
+- Remove `scipy` from requirements and add `matplotlib`.
+- Add `Error()` class for universal error raise.
+- Import issue fixes, bug fixes and compatibility optimization.
+
 ### 0.2.4 Update
 
 - Add more docstrings.

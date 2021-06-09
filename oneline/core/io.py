@@ -12,11 +12,13 @@ from os.path import isfile, isdir, exists
 
 
 class IO(object):
+
     @staticmethod
     def ignore(*ignorance):
         """
         A built-in ignore_patterns function.
         """
+
         return shutil.ignore_patterns(*ignorance)
 
     @staticmethod
@@ -27,6 +29,7 @@ class IO(object):
 
         For example: io.copy('input', 'new', ignore=io.ignore('*.csv'))
         """
+
         if isdir(source):
             if ignore:
                 shutil.copytree(source, to, ignore=ignore)
@@ -42,6 +45,7 @@ class IO(object):
         """
         Delete the file or folder.
         """
+
         shutil.rmtree(source)
 
     @staticmethod
@@ -49,6 +53,7 @@ class IO(object):
         """
         Move file or folder.
         """
+
         shutil.move(source, to)
 
     @staticmethod
@@ -56,6 +61,7 @@ class IO(object):
         """
         Create a new directory.
         """
+
         if exists(path):
             raise AttributeError(f"The path *{ path }* is exist.")
         else:
@@ -68,6 +74,7 @@ class IO(object):
 
         WARNING: This is for only small size of files, which means that the bigger size will lead to a memory exception.
         """
+
         with open(path, mode, encoding=encoding, errors=errors) as f:
             return f.read()
 
@@ -78,6 +85,7 @@ class IO(object):
 
         WARNING: This is for only small size of files, which means that the bigger size will lead to a memory exception.
         """
+
         with open(path, mode, encoding=encoding, errors=errors) as f:
             return f.readlines()
 
@@ -89,6 +97,7 @@ class IO(object):
         If the content is a list, it will be written with writelines mode.
         And also the write mode will be used if the content is string.
         """
+
         with open(path, mode, encoding=encoding, errors=errors) as f:
             if isinstance(content, list):
                 f.writelines(content)
@@ -100,6 +109,7 @@ class IO(object):
         """
         Load the json file, which will return a dictionary.
         """
+
         with open(path, 'r', encoding=encoding) as f:
             return json.load(f)
 
@@ -108,5 +118,6 @@ class IO(object):
         """
         Save a dictionary to json file
         """
+
         with open(path, 'w', encoding=encoding) as f:
             f.write(json.dumps(_dict, indent=indent, ensure_ascii=ensure_ascii))

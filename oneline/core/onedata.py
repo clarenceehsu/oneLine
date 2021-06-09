@@ -15,7 +15,6 @@ import matplotlib.ticker as mtick
 import pandas as pd
 from pandas import DataFrame
 from pandas._libs import lib
-from pandas.util._decorators import doc
 from pandas.api.types import is_categorical_dtype
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
@@ -33,32 +32,12 @@ from pandas.core.indexing import convert_to_index_sliceable
 
 # oneline module
 from .plot import Plot
+from .error import Error
 from .oneseries import OneSeries
-
-_shared_doc_kwargs = {
-    "axes": "index, columns",
-    "klass": "DataFrame",
-    "axes_single_arg": "{0 or 'index', 1 or 'columns'}",
-    "axis": """axis : {0 or 'index', 1 or 'columns'}, default 0
-        If 0 or 'index': apply function to each column.
-        If 1 or 'columns': apply function to each row.""",
-    "optional_by": """
-        by : str or list of str
-            Name or list of names to sort by.
-
-            - if `axis` is 0 or `'index'` then `by` may contain index
-              levels and/or column labels.
-            - if `axis` is 1 or `'columns'` then `by` may contain column
-              levels and/or index labels.""",
-    "optional_labels": """labels : array-like, optional
-            New labels / index to conform the axis specified by 'axis' to.""",
-    "optional_axis": """axis : int or str, optional
-            Axis to target. Can be either the axis name ('index', 'columns')
-            or number (0, 1).""",
-}
+from ..tools.compat import import_optional_dependency
 
 
-class OneData(DataFrame, ABC, Plot):
+class OneData(DataFrame, ABC, Plot, Error):
     """
     That's the initial of the OneData class.
     Acceptable type:
@@ -71,20 +50,6 @@ class OneData(DataFrame, ABC, Plot):
     OneData is a advanced class of Pandas.DataFrame with more methods and all the features of DataFrame inherited.
     """
 
-    def _raise_format_error(self):
-        """
-        The exception of ValueError when format was unsupported.
-        :return: ValueError
-        """
-        raise ValueError('Input format error, please input a valid dataset that satisfied OneData.')
-
-    def _raise_parameter_error(self, args):
-        """
-        The exception of ValueError when format was unsupported.
-        :return: ValueError
-        """
-        raise ValueError('Input parameter {} {} not exist.'.format(", ".join(args), "is" if len(args) == 1 else "are"))
-
     def __init__(self, *args, index=None, columns=None, dtype=None, copy: bool = False):
         """
         Input data or address string, and convert it to OneData format.
@@ -96,6 +61,7 @@ class OneData(DataFrame, ABC, Plot):
             ...
         OneData inherits all the features of DataFrame.
         """
+
         data = {}
         if not args:
             pass
@@ -124,6 +90,7 @@ class OneData(DataFrame, ABC, Plot):
         """
         The rebuilt method of __getitem__, which will redirect the DataFrame and Series to OneData and OneSeries.
         """
+
         key = lib.item_from_zerodim(key)
         key = com.apply_if_callable(key, self)
 
@@ -175,8 +142,9 @@ class OneData(DataFrame, ABC, Plot):
              precision: int = None):
         """
         Display the info and details of data.
-        The display options would be reset to the previous state after printing data, in other words, the options that
-        was edited in show() would not be inherited.
+        The display options would be reset to the previous state after printing data, in other words, the
+        options that was edited in show() would not be inherited.
+
         :param info: stay True if a display of information is required
         :param all_columns: reset the display of columns if columns equals to True
         :param all_rows: reset the display of rows if rows equals to True
@@ -185,6 +153,7 @@ class OneData(DataFrame, ABC, Plot):
         :param precision: a fast adjustment to the precision of display
         :return None
         """
+
         if info:
             self.info(memory_usage=False)
             print('\n\n - Shape: {}\n - Index: {}\n - Memory usage: {:.3f} MB\n'
@@ -213,11 +182,13 @@ class OneData(DataFrame, ABC, Plot):
         """
         Create the separated datasets based on the original one.
         The proportion of the train data and hold-out data should be specified.
+
         :param train_frac: the proportion of train data
         :param random: set True if random dataset is needed
         :param random_seed: the random seed of making dataset procession
         :returns train_data, test_data
         """
+
         if random:
             train_data = self.sample(frac=train_frac, random_state=random_seed)
             test_data = self.drop(train_data.index)
@@ -228,37 +199,44 @@ class OneData(DataFrame, ABC, Plot):
             test_data = self.iloc[index_num:, :]
             return OneData(train_data), OneData(test_data)
         else:
-            self._raise_parameter_error(["train_frac or random"])
+            self._raise_parameter_error(["train_frac"])
 
     def reverse(self, axis: str = 'row', reset_index: bool = False):
         """
         Method for reversing the dataset.
+
         :param axis: set 'row' if the order of the rows is to be reversed, and set 'column' if the order of the column
         is to be reversed
         :param reset_index: true for reset the index of data frame
         :param inplace: inplace modification if it sets True
         :return OneData
         """
-        if axis == 'row':
+
+        # the acceptable attributes
+        row_attr = {"row", "r"}
+        column_attr = {"column", "col", "c"}
+
+        # match attributes
+        if axis in row_attr:
             if reset_index:
                 return OneData(self.loc[::-1].reset_index(drop=True))
             else:
                 return OneData(self.loc[::-1])
-        elif axis == 'column':
+        elif axis in column_attr:
             return OneData(self.loc[:, ::-1])
+        else:
+            self._wrong_parameter_error("axis")
 
     def summary(self, info: bool = True):
         """
-        Return a summary of the whole dataset.
-        the stats from scipy is used to calculate the Entropy.
+        Return a summary of the whole dataset. And the stats from scipy is used to calculate the Entropy.
+
         :param info: stay True if a display of information is required
         :return the detail of summary
         """
-        from scipy import stats
 
-        pd.set_option('display.max_columns', None)
-        print(f"Dataset Shape: {self.shape}")
-        summary_info = pd.DataFrame(self.dtypes, columns=['dtypes'])
+        # summarize the data and build summary_info sheet
+        summary_info = OneData(self.dtypes, columns=['dtypes'])
         summary_info = summary_info.reset_index()
         summary_info['Name'] = summary_info['index']
         summary_info = summary_info[['Name', 'dtypes']]
@@ -268,15 +246,21 @@ class OneData(DataFrame, ABC, Plot):
         summary_info['Second Value'] = self.loc[self.index[1]].values
         summary_info['Third Value'] = self.loc[self.index[2]].values
 
-        for name in summary_info['Name'].value_counts().index:
-            summary_info.loc[summary_info['Name'] == name, 'Entropy'] = round(
-                stats.entropy(self[name].value_counts(normalize=True), base=2), 2)
-        if info:
-            print(summary_info)
-        return summary_info
+        # Add Entropy if scipy is installed
+        stats = import_optional_dependency("scipy.stats")
 
-    @doc(NDFrame.fillna, **_shared_doc_kwargs)
-    def fillna(
+        if stats:
+            for name in summary_info['Name'].value_counts().index:
+                summary_info.loc[summary_info['Name'] == name, 'Entropy'] = round(
+                    stats.entropy(self[name].value_counts(normalize=True), base=2), 2)
+
+        if info:
+            pd.set_option('display.max_columns', None)
+            print(f"Dataset Shape: {self.shape}")
+            print(summary_info)
+        return OneData(summary_info)
+
+    def fill_na(
             self,
             value=None,
             method=None,
@@ -286,7 +270,9 @@ class OneData(DataFrame, ABC, Plot):
             downcast=None,
     ):
         """
-        Fill the NaN values, which is an extended function of original fillna().
+        Fill the NaN values, which is an extended function of original fillna() and has more methods to fill
+        the NaN data.
+
         :param method: the way to fill the NaN values, which contains mode and nan methods
         :param inplace: inplace modification
         :param value: inherit
@@ -294,6 +280,7 @@ class OneData(DataFrame, ABC, Plot):
         :param limit: inherit
         :param downcast: inherit
         """
+
         if method == 'mode':
             if inplace:
                 for key, value in self.isnull().sum().items():
@@ -313,7 +300,7 @@ class OneData(DataFrame, ABC, Plot):
                 data = data.fillna(np.nan)
                 return data
         else:
-            return super().fillna(
+            return self.fillna(
                 value=value,
                 method=method,
                 axis=axis,
@@ -322,26 +309,40 @@ class OneData(DataFrame, ABC, Plot):
                 downcast=downcast,
             )
 
-    def remove(self, column: list = None, row: list = None):
+    def remove(self, column: list = None, row: list = None, inplace: bool = False):
         """
         The advanced function of DataFrame.drop, you can input a list of index to drop them.
+
         :param column: the list of column you want to remove
         :param row: the list of row you want to remove
+        :param inplace: inplace remove or not
         """
-        data = self
-        if column:
-            data = data.drop(column, axis=1)
-        if row:
-            for n in row:
-                data = data.drop(n)
-        return OneData(data)
 
-    def add_var(self, exist, new, mapper=None):
+        # inplace measurement
+        if inplace:
+            if column:
+                self.drop(column, axis=1, inplace=True)
+            if row:
+                for n in row:
+                    self.drop(n, inplace=True)
+        # non inplace measurement
+        else:
+            data = self
+            if column:
+                data = data.drop(column, axis=1)
+            if row:
+                for n in row:
+                    data = data.drop(n)
+            return OneData(data)
+
+    def map_values(self, exist, new, mapper=None):
         """
         Generate a new variable based on the calculating of exist variable using map().
+
         :param exist: the exist column of data
         :param new: the name of new column
         :param mapper: the mapper applied to the exist variable
+
         For example:
         >>       0    1    2
             0  1.0  2.0  3.0
@@ -357,6 +358,7 @@ class OneData(DataFrame, ABC, Plot):
             2  1.0  2.0  2.0   2.0
             3  8.0  8.0  2.0  16.0
         """
+
         data = self
         if mapper:
             data[new] = list(map(mapper, data[exist]))
@@ -365,18 +367,31 @@ class OneData(DataFrame, ABC, Plot):
         return data
 
     def mean(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        """
+        The mean method.
+
+        :param axis: inherit
+        :param skipna: inherit
+        :param level: inherit
+        :param numeric_only: inherit
+        :param kwargs: inherit
+        :return: OneSeries
+        """
+
         return OneSeries(NDFrame.mean(self, axis, skipna, level, numeric_only, **kwargs))
 
     def reduce_mem_usage(self, use_float16: bool = False, info: bool = True):
         """
         Automatically distinguish the type of one single data and reset a suitable type.
+
         :param use_float16: use float16 or not
         :param info: stay True if a display of information is required
         """
-        start_mem = self.memory_usage().sum() / 1024 ** 2
-        if info:
-            print("Memory usage of DataFrame is {:.3f} MB".format(start_mem))
 
+        # the original memory usage
+        start_mem = self.memory_usage().sum() / 1024 ** 2
+
+        # reduce the memory usage
         for col in self.columns:
             if is_datetime(self[col]) or is_categorical_dtype(self[col]):
                 continue
@@ -406,15 +421,18 @@ class OneData(DataFrame, ABC, Plot):
 
         if info:
             end_mem = self.memory_usage().sum() / 1024 ** 2
-            print("Memory usage after optimization is: {:.3f} MB".format(end_mem))
+            print("Memory usage before optimization:\t{:.3f} MB".format(start_mem))
+            print("Memory usage after optimization:\t{:.3f} MB".format(end_mem))
             print("Decreased by {:.1f}%".format(100 * (start_mem - end_mem) / start_mem))
 
     def iter(self, index=True, name="OneData"):
         """
         Iteration methods for fast using, the override of itertuples().
+
         :param index: If True, return the index as the first element of the tuple.
         :param name: The name of the returned named tuples or None to return regular.
         """
+
         arrays = []
         fields = list(self.columns)
         if index:
@@ -429,9 +447,25 @@ class OneData(DataFrame, ABC, Plot):
         return zip(*arrays)
 
     def r_append(self, other):
+        """
+        Append a OneData(DataFrame) or OneSeries(Series) to the right of dataset.
+        WARNING: this is not a inplace method.
+
+        :param other: the data
+        :return: OneData
+        """
+
         return OneData(pd.concat([self, other], axis=1))
 
     def l_append(self, other):
+        """
+        Append a OneData(DataFrame) or OneSeries(Series) to the left of dataset.
+        WARNING: this is not a inplace method.
+
+        :param other: the data
+        :return: OneData
+        """
+
         return OneData(pd.concat([other, self], axis=1))
 
     # ================== Plot Functions ================== #
@@ -463,6 +497,7 @@ class OneData(DataFrame, ABC, Plot):
         :param interval: define the number for smooth function.
         :param legend_loc: The location of the legend in plot.
         :param show: plt.show will run if true
+        :return: plt
         """
 
         # Check if y is list or str
@@ -499,7 +534,7 @@ class OneData(DataFrame, ABC, Plot):
                    ylabel: str = None,
                    show: bool = True):
         """
-        Generate the count graph
+        Generate the count graph.
 
         :param variable: The variable that should be counted
         :param hue: the hue parameter for using
@@ -509,6 +544,7 @@ class OneData(DataFrame, ABC, Plot):
         :param xlabel: label of x
         :param ylabel: label of y
         :param show: plt.show will run if true
+        :return: plt
         """
 
         # Check if y is list or str
@@ -545,13 +581,15 @@ class OneData(DataFrame, ABC, Plot):
                   annot: bool = True,
                   show: bool = True):
         """
-        Generate the correction graph
+        Generate the correction graph.
+
         :param parameters: The parameters selected.
         :param inherit: the inherit plt
         :param figsize: The size of figure.
         :param title: the title of plot
         :param annot: Display the annotation or not.
         :param show: plt.show will run if true
+        :return: plt
         """
 
         # Check if y is list or str
@@ -593,6 +631,16 @@ class OneData(DataFrame, ABC, Plot):
                   inherit: plt = None,
                   figsize: list = None,
                   show: bool = True):
+        """
+        Generate the hist graph.
+
+        :param variable: the variable to use
+        :param hue: the second variable to use
+        :param inherit: the inherit
+        :param figsize: the size of figuration.
+        :param show: show the graph if it's True
+        :return: plt
+        """
 
         # check the format of variable1 and variable2
         if not variable or not hue:
