@@ -1,12 +1,11 @@
 """
-The IO module supplies some basic IO methods with a more comprehensive auto detection. It's easy to use
+The io module supplies some basic IO methods with a more comprehensive auto detection. It's easy to use
 without learning cost.
 
 This module are based on the Python standard library shutil.
 """
 
 import os
-import json
 import shutil
 from os.path import isfile, isdir, exists
 
@@ -19,15 +18,17 @@ def ignore(*ignorance):
     return shutil.ignore_patterns(*ignorance)
 
 
-def copy(source: str, to: str, ignore=None, follow_symlinks=True):
+def copy(source: str, to: str, type=None, ignore=None, follow_symlinks=True):
     """
-    Copy a file or a folder to destination, which can be a folder or a file.
-    You can use io.ignore to ignore the particular files from copy process.
+    Copy a file or a folder to destination, which can be a folder or a file (automatically detect if type
+    isn't specified), and you can use io.ignore to ignore the particular files from copy process.
+    ** For preventing conflicts, type can be specified when needed.
 
     For example: io.copy('input', 'new', ignore=io.ignore('*.csv'))
     """
-
-    if isdir(source):
+    if type == "file":
+        shutil.copy(source, to, follow_symlinks=follow_symlinks)
+    elif type == "folder" or isdir(source):
         if ignore:
             shutil.copytree(source, to, ignore=ignore)
         else:
@@ -69,7 +70,8 @@ def read(path: str, mode: str = 'r', encoding: str = 'utf-8', errors=None):
     """
     That's a simple and fast read function for reading a file.
 
-    WARNING: This is for only small size of files, which means that the bigger size will lead to a memory exception.
+    WARNING: This is for only small size of files, which means that the bigger size will lead to a memory
+    exception.
     """
 
     with open(path, mode, encoding=encoding, errors=errors) as f:
@@ -80,7 +82,8 @@ def readlines(path: str, mode: str = 'r', encoding: str = 'utf-8', errors=None, 
     """
     That's a simple and fast readlines function for reading a file.
 
-    WARNING: This is for only small size of files, which means that the bigger size will lead to a memory exception.
+    WARNING: This is for only small size of files, which means that the bigger size will lead to a memory
+    exception.
     """
 
     with open(path, mode, encoding=encoding, errors=errors) as f:
@@ -100,21 +103,3 @@ def write(content, path, mode: str = 'w+', encoding: str = 'utf-8', errors=None)
             f.writelines(content)
         elif isinstance(content, str):
             f.write(content)
-
-
-def load_json(path: str, encoding='utf-8'):
-    """
-    Load the json file, which will return a dictionary.
-    """
-
-    with open(path, 'r', encoding=encoding) as f:
-        return json.load(f)
-
-
-def save_json(_dict: dict, path: str, indent=4, ensure_ascii=False, encoding='utf-8'):
-    """
-    Save a dictionary to json file
-    """
-
-    with open(path, 'w', encoding=encoding) as f:
-        f.write(json.dumps(_dict, indent=indent, ensure_ascii=ensure_ascii))

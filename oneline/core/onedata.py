@@ -643,26 +643,30 @@ class OneData(DataFrame, ABC, Plot, Error):
         """
 
         # check the format of variable1 and variable2
-        if not variable or not hue:
+        if not variable and not hue:
             self._raise_plot_value_error(["variable", "hue"])
-        elif self[variable].dtype == 'object' or self[hue].dtype == 'object':
+        elif self[variable].dtype == 'object' or (hue and self[hue].dtype == 'object'):
             self._raise_plot_format_error(["variable", "hue"], "int or float")
 
         # previous configuration of plot
         plt = self._plot_prev_config(inherit, figsize, "seaborn-darkgrid")
 
-        # unique value of variable2
-        unique = self[hue].unique().tolist()
+        if hue:
+            # unique value of variable2
+            unique = self[hue].unique().tolist()
 
-        # generate the plot
-        fig, axes = plt.subplots(1, len(unique))
-        fig.set_size_inches(figsize)
-        for index, ax in enumerate(axes):
-            ax.set_xlabel(variable)
-            ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
-            ax.set_title(f"{ hue } = { unique[index] }")
-            temp_data = self[self[hue] == unique[index]][variable]
-            ax.hist(temp_data, density=True, stacked=True)
+            # generate the plot
+            fig, axes = plt.subplots(1, len(unique))
+            fig.set_size_inches(figsize)
+            for index, ax in enumerate(axes):
+                ax.set_xlabel(variable)
+                ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+                ax.set_title(f"{ hue } = { unique[index] }")
+                temp_data = self[self[hue] == unique[index]][variable]
+                ax.hist(temp_data, density=True, stacked=True)
+
+        else:
+            plt.hist(self[variable])
 
         # return for advanced adjustment
         return self._plot_post_config(plt, '', '', '', '', show)

@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 0.2.6 Update
+
+- Move `io.py` and `convert.py` to dedicated packages for future functional extensions.
+- Bug fixes.
+
 ### 0.2.5 Update
 
 - Add `NeuralNetwork.iter_epoch()` and `NeuralNetwork.iter_batch()` for advanced using.

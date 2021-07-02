@@ -1,3 +1,8 @@
+"""
+A super lightweight module for Neural Network training, which now only includes basic training methods and
+will be updated in the future.
+"""
+
 from os.path import join
 
 from .average_meter import AverageMeter
@@ -9,6 +14,17 @@ class NeuralNetwork(object):
     A tools for a fast training process of neural network, which can start training without other code after
     the dataset, optimizer and other parameters declared.
     """
+
+    def _clean_cache(self):
+        """
+        Clean the cache before auto-training, which can avoid .
+
+        :return: None
+        """
+
+        torch = import_optional_dependency("torch")
+        with torch.cuda.device(self.device):
+            torch.cuda.empty_cache()
 
     def _raise_format_error(self, name: str, format_str: str, source_format: str):
         """
@@ -282,6 +298,7 @@ class NeuralNetwork(object):
         self.info = info
         best_attempt = float("-inf")
         self._set_train()
+        self._clean_cache()
 
         # start training
         for n in range(epoch):
