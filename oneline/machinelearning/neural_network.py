@@ -3,7 +3,7 @@ A super lightweight module for Neural Network training, which now only includes 
 will be updated in the future.
 """
 
-from os.path import join
+from os.path import join, isdir, isfile
 
 from .average_meter import AverageMeter
 from ..tools.compat import import_optional_dependency
@@ -23,8 +23,9 @@ class NeuralNetwork(object):
         """
 
         torch = import_optional_dependency("torch")
-        with torch.cuda.device(self.device):
-            torch.cuda.empty_cache()
+        if self.device == torch.device('cuda'):
+            with torch.cuda.device(self.device):
+                torch.cuda.empty_cache()
 
     def _raise_format_error(self, name: str, format_str: str, source_format: str):
         """
@@ -100,90 +101,59 @@ class NeuralNetwork(object):
         if self.model.__dict__['training']:
             self.model.eval()
 
-    def _train_net(self, iter_batch: bool = False):
-        """
-        The train iterator that executes a standard training flow per epoch.
+    @staticmethod
+    def _set_save_location(location):
+        if isdir(location):
+            return join(location, 'model.pkl')
+        return location
 
-        :param iter_batch:
+    def _batch_iter(self, source, target, i: int):
+        """
+        The train function that executes a standard training flow per epoch.
+
+        :return:
+        """
+        # send data to device
+        source = source.to(self.device)
+        target = target.to(self.device)
+
+        # the result and loss
+        result = self.model(source)
+        loss = self.criterion(result, target)
+
+        # optimization and backward
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        # update the loss
+        self.epoch_loss.update(loss.item(), source.size(0))
+
+        # print the information
+        if self.info:
+            print(f"\rEpoch: { self.epoch } | Batch: { i } | loss: { self.epoch_loss.avg }", end="")
+
+        # clean the data
+        del source, target
+
+        return result
+
+    def _train_batch(self):
+        """
+        The train iterator that executes a standard training flow per batch.
+
         :return:
         """
 
-        # model initialize
-        self._set_train()
-
         # start epoch
         for i, (source, target) in enumerate(self.train_dataset):
-            # send data to device
-            source = source.to(self.device)
-            target = target.to(self.device)
+            result = self._batch_iter(source, target, i)
 
-            # the result and loss
-            result = self.model(source)
-            loss = self.criterion(result, target)
-
-            # optimization and backward
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-
-            # update the loss
-            self.epoch_loss.update(loss.item(), source.size(0))
-
-            # print the information
-            if self.info:
-                print(f"\rEpoch: { self.epoch } | Batch: { i } | loss: { self.epoch_loss.avg }", end="")
-
-            # yield if iter_batch is True
-            if iter_batch:
-                yield result
-
-        if self.info:
-            print(f"\rEpoch: { self.epoch } | Average loss: { self.epoch_loss.avg }")
-
-        # update epoch and reset the epoch_loss
-        self.epoch_loss.reset()
-        self.epoch += 1
-
-    def _eval_net(self):
-        """
-        The evaluation flow using test_dataset without grad.
-
-        :return: The total loss during evaluation and model's accuracy
-        """
-
-        # parameters initialize
-        torch = import_optional_dependency("torch")
-        eval_total = 0
-        eval_correct = 0
-        eval_loss = 0
-        self._set_eval()
-
-        # display the information
-        if self.info:
-            print(f"\rEvaluating...", end="")
-
-        # start eval part
-        for i, (source, target) in enumerate(self.eval_dataset):
-            # send data to device
-            source = source.to(self.device)
-            target = target.to(self.device)
-
-            result = self.model(source)
-            eval_loss += self.criterion(result, target).item()
-            _, predicted = torch.max(result.data, 1)
-            eval_total += target.size(0)
-            eval_correct += (predicted == target).sum().item()
-
-        accuracy = eval_correct / eval_total
-        eval_loss = eval_loss / eval_total
-
-        if self.info:
-            print(f"\rEvaluation loss: { eval_loss } | Accuracy: { accuracy }")
-
-        return eval_loss, accuracy
+            # yield
+            yield result
 
     @staticmethod
-    def _reset_weight(m):
+    def _reset_weights(m):
         """
         A sub-function with a general weights initialization.
 
@@ -274,6 +244,10 @@ class NeuralNetwork(object):
 
         return info
 
+    @property
+    def layers(self):
+        return self.model.state_dict().items()
+
     def auto_train(self,
                    epoch: int,
                    save_model_location: str,
@@ -294,37 +268,51 @@ class NeuralNetwork(object):
         :return: None
         """
 
-        # initialize
+        # initialization
         self.info = info
         best_attempt = float("-inf")
         self._set_train()
+
+        # clean the cache if cuda is available
         self._clean_cache()
 
         # start training
         for n in range(epoch):
-            self._train_net()
+            self.iter_epoch()
             if self.eval_dataset and eval and not (n + 1) % eval_interval:
                 # eval start
-                eval_loss, accuracy = self._eval_net()
+                eval_loss, accuracy = self.eval()
 
                 # save the best model
                 if accuracy > best_attempt:
                     best_attempt = accuracy
                     if save_static_dicts:
-                        self.save_state_dict(join(save_model_location, 'model.pkl'))
+                        self.save_state_dict(save_model_location)
                     else:
-                        self.save_model(join(save_model_location, 'model.pkl'))
+                        self.save_model(save_model_location)
+                    print(f"The best model is saved to { self._set_save_location(save_model_location) }. "
+                          f"Best accuracy: { best_attempt }")
 
     def iter_epoch(self):
         """
-        An iterator that training per epoch and return for advanced calculation, plot, etc.
+        An function that would stop training per epoch for advanced calculation, plot, etc.
 
         :return: None
         """
 
         # set to train mode
         self._set_train()
-        self._train_net()
+
+        # start epoch
+        for i, (source, target) in enumerate(self.train_dataset):
+            self._batch_iter(source, target, i)
+
+        if self.info:
+            print(f"\rEpoch: { self.epoch } | Average loss: { self.epoch_loss.avg }")
+
+        # update epoch and reset the epoch_loss
+        self.epoch_loss.reset()
+        self.epoch += 1
 
     def iter_batch(self):
         """
@@ -333,20 +321,66 @@ class NeuralNetwork(object):
         :return: output
         """
 
+        # model initialization
+        self._set_train()
+
         if not self.batch_process:
-            self.batch_process = self._train_net(iter_batch=True)
+            self.batch_process = self._train_batch()
             return self.batch_process.__next__()
         else:
-            return self.batch_process.__next__()
+            try:
+                return self.batch_process.__next__()
+            except StopIteration:
+                # update the state if StopIteration
+                if self.info:
+                    print(f"\rEpoch: { self.epoch } | Average loss: { self.epoch_loss.avg }")
+
+                # update epoch and reset the epoch_loss
+                self.epoch_loss.reset()
+                self.epoch += 1
+
+                # reset the batch process
+                del self.batch_process
+                self.batch_process = self._train_batch()
+                return self.batch_process.__next__()
 
     def eval(self):
         """
-        The evaluation function.
+        The evaluation flow using test_dataset without grad.
 
-        :return: None
+        :return: The total loss during evaluation and model's accuracy
         """
 
-        self._eval_net()
+        # parameters initialize
+        torch = import_optional_dependency("torch")
+        eval_total = 0
+        eval_correct = 0
+        eval_loss = 0
+        self._set_eval()
+
+        # display the information
+        if self.info:
+            print(f"\rEvaluating...", end="")
+
+        # start eval part
+        for i, (source, target) in enumerate(self.eval_dataset):
+            # send data to device
+            source = source.to(self.device)
+            target = target.to(self.device)
+
+            result = self.model(source)
+            eval_loss += self.criterion(result, target).item()
+            _, predicted = torch.max(result.data, 1)
+            eval_total += target.size(0)
+            eval_correct += (predicted == target).sum().item()
+
+        accuracy = eval_correct / eval_total
+        eval_loss = eval_loss / eval_total
+
+        if self.info:
+            print(f"\rEvaluation loss: { eval_loss } | Accuracy: { accuracy }")
+
+        return eval_loss, accuracy
 
     def reset_train(self):
         """
@@ -356,12 +390,13 @@ class NeuralNetwork(object):
         :return: None
         """
 
-        self.model.apply(self._reset_weight)
+        self.model.apply(self._reset_weights)
         self.epoch_loss.reset()
         self.epoch = 0
+        del self.batch_process
         self.batch_process = None
 
-    def save_state_dict(self, location: str):
+    def save_weights(self, location: str):
         """
         Save only the state dict of the model.
 
@@ -369,8 +404,9 @@ class NeuralNetwork(object):
         :return: None
         """
 
+        # import torch
         torch = import_optional_dependency("torch")
-        torch.save(self.model.state_dict(), location)
+        torch.save(self.model.state_dict(), self._set_save_location(location))
 
     def save_model(self, location: str):
         """
@@ -380,8 +416,19 @@ class NeuralNetwork(object):
         :return: None
         """
 
+        # import torch
         torch = import_optional_dependency("torch")
-        torch.save(self.model, location)
+
+        torch.save(self.model, self._set_save_location(location))
+
+    def load_weights(self, location: str):
+        torch = import_optional_dependency("torch")
+        if not isfile(location):
+            raise ValueError(f"The { location } is not a valid dict file.")
+        self.model.load_state_dict(torch.load(location))
+
+    def reset_weights(self):
+        self.model.apply(self._reset_weights)
 
     def check_parameters(self):
         """

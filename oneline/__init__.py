@@ -14,7 +14,7 @@ from .core import *
 from .machinelearning import *
 
 # Information
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 __author__ = 'Zeesain Tsui'
 
 # check the essential dependencies

@@ -1,5 +1,13 @@
 ## CHANGELOG
 
+### 0.2.7 Update
+
+- A bug fixed in `NeuralNetwork.iter_epoch()` and `NeuralNetwork.iter_batch()`.
+- Improve the functionality of `NeuralNetwork.iter_batch()`.
+- Optimization and Bug fixes in `NeuralNetwork()`.
+- Add `load_weights()`, `reset_weights()`, `save_weights()` and `layers` in `NeuralNetwork()`.
+- Add some fast-using functions.
+
 ### 0.2.6 Update
 
 - Move `io.py` and `convert.py` to dedicated packages for future functional extensions.
