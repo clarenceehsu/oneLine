@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### 0.2.8 Update
+
+- Add some tools in `oneline.tools`.
+
 ### 0.2.7 Update
 
 - A bug fixed in `NeuralNetwork.iter_epoch()` and `NeuralNetwork.iter_batch()`.

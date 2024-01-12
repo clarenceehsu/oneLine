@@ -17,19 +17,18 @@ class NeuralNetwork(object):
 
     def _clean_cache(self):
         """
-        Clean the cache before auto-training, which can avoid .
+        Clean the cache before auto-training, which can avoid memory leaks.
 
         :return: None
         """
 
-        torch = import_optional_dependency("torch")
         if self.device == torch.device('cuda'):
             with torch.cuda.device(self.device):
                 torch.cuda.empty_cache()
 
     def _raise_format_error(self, name: str, format_str: str, source_format: str):
         """
-        The exception of ValueError when format was unsupported.
+        The exception to ValueError when format was unsupported.
 
         :return: ValueError
         """
@@ -256,7 +255,7 @@ class NeuralNetwork(object):
                    info: bool = True,
                    save_static_dicts: bool = True):
         """
-        A auto training method for fast using. And the epoch and the location for saving models should be
+        An auto training method for fast using. And the epoch and the location for saving models should be
         specified while using auto_train().
 
         :param epoch: teh epoch of training
@@ -295,7 +294,7 @@ class NeuralNetwork(object):
 
     def iter_epoch(self):
         """
-        An function that would stop training per epoch for advanced calculation, plot, etc.
+        A function that would stop training per epoch for advanced calculation, plot, etc.
 
         :return: None
         """

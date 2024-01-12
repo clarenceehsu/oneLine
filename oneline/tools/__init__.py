@@ -1,4 +1,5 @@
 """
-The useful tools for development.
+The useful tools for development and testing.
 """
-from isornot import *
+from .isornot import *
+from .decorator import *
